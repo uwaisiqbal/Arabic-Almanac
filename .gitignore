@@ -1,0 +1,6 @@
+bin/
+.settings/
+assets/
+gen/
+res/
+ic_launcher-web.png

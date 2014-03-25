@@ -35,12 +35,8 @@ public class ImageViewer extends Activity implements OnClickListener {
     private Button topNextPageButton, topLastPageButton, bottomNextPageButton,
 	    bottomLastPageButton;
     private int index;
+    private Dictionary dict;
 
-    /*
-     * TODO: For Search: Setup Action Bar Add in a edit box so users can search
-     * Validate search parameters Convert from roman letters to Arabic Search
-     * using supplied parameter If not found load the closest page
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	// TODO Auto-generated method stub
@@ -56,15 +52,17 @@ public class ImageViewer extends Activity implements OnClickListener {
 	topLastPageButton.setOnClickListener(this);
 	bottomLastPageButton = (Button) findViewById(R.id.bBottomPreviousPage);
 	bottomLastPageButton.setOnClickListener(this);
-
+	
+	dict = new Dictionary("hw4", "Hans Wehr");
 	imdisplayImage.setMaxZoom(4);
+	imdisplayImage.maintainZoomAfterSetImage(false);
 	path = Environment.getExternalStorageDirectory().toString() + "/"
 		+ getResources().getString(R.string.app_name) + "/";
 
-	Bitmap bmp = BitmapFactory.decodeFile(path + "img/hw4/0/hw4-0001.png");
+	index = 0;
+	Bitmap bmp = BitmapFactory.decodeFile(path + "img/" + dict.getReference() + "/0/" + dict.getReference() + "-0001.png");
 	imdisplayImage.setImageBitmap(bmp);
 	parseFileToArrayList();
-
 	handleIntent(getIntent());
 
     }
@@ -90,13 +88,13 @@ public class ImageViewer extends Activity implements OnClickListener {
 	query = convertFromRomanToArabic(query);
 	index = Arrays.binarySearch(indexes.toArray(), query);
 	if (index < 0) {
-	    index = index * (-1);
+	    index = (index +1) * (-1);
 	}
-	DisplayImageUsingIndex(index);
+	DisplayImageUsingIndex();
 
     }
 
-    private void DisplayImageUsingIndex(int index2) {
+    private void DisplayImageUsingIndex() {
 	// TODO Auto-generated method stub
 	String indexString = Integer.toString(index);
 	int folder = (int) Math.round(index / 100 - 0.5f);
@@ -106,8 +104,9 @@ public class ImageViewer extends Activity implements OnClickListener {
 		indexString = "0" + indexString;
 	    }
 	}
-	String location = path + "img/hw4/" + Integer.toString(folder)
-		+ "/hw4-" + indexString + ".png";
+	String location = path + "img/" + dict.getReference() + "/" + Integer.toString(folder)
+		+ "/" + dict.getReference() + "-" + indexString + ".png";
+	Log.v("location", location);
 	Bitmap bmp = BitmapFactory.decodeFile(location);
 	imdisplayImage.setImageBitmap(bmp);
     }
@@ -150,7 +149,6 @@ public class ImageViewer extends Activity implements OnClickListener {
 	query = query.replaceAll("[nN]", "ن");
 	query = query.replaceAll("[wW]", "و");
 	query = query.replaceAll("[yY]", "ي");
-	Log.v("query", query);
 	return query;
     }
 
@@ -237,12 +235,14 @@ public class ImageViewer extends Activity implements OnClickListener {
 	case R.id.bTopNextPage:
 	case R.id.bBottomNextPage:
 	    index +=1;
-	    DisplayImageUsingIndex(index);
+	    DisplayImageUsingIndex();
 	    break;
 	case R.id.bTopPreviousPage:
 	case R.id.bBottomPreviousPage:
-	    index -= 1;
-	    DisplayImageUsingIndex(index);
+	    if(index!= 0){
+		index -= 1;
+	    }
+	    DisplayImageUsingIndex();
 	    break;
 
 	}

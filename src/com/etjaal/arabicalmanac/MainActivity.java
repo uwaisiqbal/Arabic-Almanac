@@ -34,6 +34,7 @@ import android.os.Environment;
 import android.os.StatFs;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -218,13 +219,13 @@ public class MainActivity extends Activity {
 	    AsyncTask<String, Integer, String> {
 
 	private NotificationManager mNotifyManager;
-	private Notification.Builder mBuilder;
+	private NotificationCompat.Builder mBuilder;
 
 	@Override
 	protected void onPreExecute() {
 	    // TODO Auto-generated method stub
 	    mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-	    mBuilder = new Notification.Builder(getBaseContext());
+	    mBuilder = new NotificationCompat.Builder(getBaseContext());
 	    PendingIntent pi = PendingIntent.getActivity(
 		    getApplicationContext(), 0, new Intent(), 0);
 	    mBuilder.setContentTitle("Downloading")

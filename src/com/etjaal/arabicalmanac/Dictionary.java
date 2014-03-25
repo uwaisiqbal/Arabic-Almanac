@@ -9,7 +9,9 @@ public class Dictionary {
     private int size;
     private boolean installed;
 
-    public Dictionary() {
+    public Dictionary(String reference, String name) {
+	this.reference = reference;
+	this.name = name;
     }
 
     public int getId() {

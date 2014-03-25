@@ -15,6 +15,7 @@ import java.util.zip.ZipInputStream;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
@@ -33,7 +34,6 @@ import android.os.Environment;
 import android.os.StatFs;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -218,13 +218,13 @@ public class MainActivity extends Activity {
 	    AsyncTask<String, Integer, String> {
 
 	private NotificationManager mNotifyManager;
-	private NotificationCompat.Builder mBuilder;
+	private Notification.Builder mBuilder;
 
 	@Override
 	protected void onPreExecute() {
 	    // TODO Auto-generated method stub
 	    mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-	    mBuilder = new NotificationCompat.Builder(getBaseContext());
+	    mBuilder = new Notification.Builder(getBaseContext());
 	    PendingIntent pi = PendingIntent.getActivity(
 		    getApplicationContext(), 0, new Intent(), 0);
 	    mBuilder.setContentTitle("Downloading")

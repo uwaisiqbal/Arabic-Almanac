@@ -1,62 +1,201 @@
 package com.etjaal.arabicalmanac;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
+import android.app.ProgressDialog;
+import android.app.SearchManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.StatFs;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.SearchView;
 import android.widget.Toast;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity implements OnClickListener {
 
-    private String baseLink = "http://ia600803.us.archive.org/2/items/ArabicAlmanac/base.zip";
-    private String hansWehrLink = "http://ia600803.us.archive.org/2/items/ArabicAlmanac/hw4.zip";
+    private TouchImageView imdisplayImage;
+    private Button topNextPageButton, topLastPageButton;
+    private Dictionary dict;
+    private SearchInterface searchInterface;
     private String path;
-    private int noOfTasksRemaining;
     private SharedPreferences.Editor editor;
     private SharedPreferences prefs;
     private static final String FIRST_TIME_PREFS_KEY = "firstTime";
+    private static final String REORGANISE_FILES_STRUCTURE_PREFS_KEY = "reorganiseFiles";
+    private static final String IMAGES_IN_GALLERY_FIX_PREFS_KEY = "galleryfix";
+    private static final String DOWNLOAD_SERVICE_RUNNING = "downloadServiceRunning";
+    private static final String INDETERMINATE_STAGE = "indeterminateStage";
+    // private String hansWehrLink =
+    // "http://ia600803.us.archive.org/2/items/ArabicAlmanac/hw4.zip";
+    private String hansWehrLink = "https://dl.dropboxusercontent.com/u/63542577/hw4.zip";
+    private IntentFilter mFilter = new IntentFilter("download");
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+	// TODO Auto-generated method stub
 	super.onCreate(savedInstanceState);
-
+	setContentView(R.layout.activity_main);
 	path = Environment.getExternalStorageDirectory().toString() + "/"
 		+ getResources().getString(R.string.app_name) + "/";
 	prefs = PreferenceManager.getDefaultSharedPreferences(this);
 	editor = prefs.edit();
-	run();
+	mFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
+	referenceViews();
+	dict = new Dictionary("hw4", "Hans Wehr");
+	searchInterface = new SearchInterface(getApplicationContext(), dict);
+	handleIntent(getIntent());
+	if (!prefs.getBoolean(DOWNLOAD_SERVICE_RUNNING, false)) {
+	    run();
+	} else {
+	    // Dismiss notification bar
+	    NotificationManager mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+	    NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
+		    this);
+	    mNotifyManager.cancel(0);
+	    setupProgressDialog(prefs.getBoolean(INDETERMINATE_STAGE, false));
+	}
+    }
+
+    private void setupProgressDialog(boolean indeterminate) {
+	progressDialog = new ProgressDialog(MainActivity.this);
+	progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+	progressDialog.setCancelable(false);
+	progressDialog.setCanceledOnTouchOutside(false);
+	progressDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Minimise",
+		new DialogInterface.OnClickListener() {
+
+		    @Override
+		    public void onClick(DialogInterface dialog, int which) {
+			// close the activity
+			finish();
+		    }
+		});
+	if (indeterminate) {
+	    // If unzipping files
+	    progressDialog.setIndeterminate(true);
+	    progressDialog.setProgressNumberFormat(null);
+	    progressDialog.setProgressPercentFormat(null);
+	    progressDialog.setTitle(getResources().getString(
+		    R.string.progress_bar_unzip_title));
+	    progressDialog.setMessage(getResources().getString(
+		    R.string.progress_bar_unzip_message));
+
+	} else {
+	    // If still downloading
+	    progressDialog.setTitle(getResources().getString(
+		    R.string.progress_bar_download_title));
+	    progressDialog.setMessage(getResources().getString(
+		    R.string.progress_bar_download_message));
+	    progressDialog.setProgress(0);
+	    progressDialog.setMax(100);
+	}
+
+	progressDialog.show();
+    }
+
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+
+	@Override
+	public void onReceive(Context context, Intent intent) {
+	    // TODO Action when in foreground
+	    // Update progress bar with progress data
+	    if (intent.getAction().equals("download")) {
+		int progress = intent.getExtras().getInt("progress");
+		if (progress >= 0) {
+		    progressDialog.setProgress(progress);
+		    if (progress == 101) {
+			progressDialog.setIndeterminate(true);
+			progressDialog.setProgressNumberFormat(null);
+			progressDialog.setProgressPercentFormat(null);
+			progressDialog.setTitle(getResources().getString(
+				R.string.progress_bar_unzip_title));
+			progressDialog.setMessage(getResources().getString(
+				R.string.progress_bar_unzip_message));
+		    }
+		} else if (progress == -1) {
+		    // download failed
+		    progressDialog.dismiss();
+		    Toast.makeText(context,
+			    "Download failed. Please try again.",
+			    Toast.LENGTH_SHORT).show();
+		    run();
+		} else if (progress == -2) {
+		    // download succeeded
+		    progressDialog.dismiss();
+		    Toast.makeText(context,
+			    "All files have been successfully downloaded",
+			    Toast.LENGTH_SHORT).show();
+		    run();
+		}
+		abortBroadcast();
+	    }
+
+	}
+
+    };
+
+    @Override
+    protected void onStart() {
+	// TODO Auto-generated method stub
+	registerReceiver(mReceiver, mFilter);
+	super.onStart();
+
+    }
+
+    @Override
+    protected void onStop() {
+	// TODO Auto-generated method stub
+	unregisterReceiver(mReceiver);
+	super.onStop();
+    }
+
+    private void run() {
+	// TODO Auto-generated method stub
+	if (!prefs.getBoolean(FIRST_TIME_PREFS_KEY, false)) {
+	    if (!isNetworkAvailable()) {
+		showInternetConnectionDialog();
+	    } else {
+		showDownloadDialog();
+	    }
+	} else {
+	    // if file structure hasn't been re-organised yet
+	    if (!prefs.getBoolean(REORGANISE_FILES_STRUCTURE_PREFS_KEY, false)) {
+		organiseFileStructure();
+	    }
+	    // Fix to prevent images from showing in gallery
+	    if (!prefs.getBoolean(IMAGES_IN_GALLERY_FIX_PREFS_KEY, false)) {
+		File noMediaFile = new File(path, ".nomedia");
+		noMediaFile.mkdir();
+		editor.putBoolean(IMAGES_IN_GALLERY_FIX_PREFS_KEY, true);
+		editor.commit();
+	    }
+	    // run app
+	    searchInterface.setIndex(1);
+	    displayImageUsingIndex();
+
+	}
     }
 
     public void showDownloadDialog() {
@@ -65,7 +204,8 @@ public class MainActivity extends Activity {
 		.setTitle(getResources().getString(R.string.dialog_title))
 		.setMessage(getResources().getString(R.string.dialog_message))
 		.setCancelable(false)
-		.setNegativeButton("Cancel",
+		.setNegativeButton(
+			getResources().getString(R.string.dialog_cancel_button),
 			new DialogInterface.OnClickListener() {
 
 			    @Override
@@ -76,44 +216,24 @@ public class MainActivity extends Activity {
 				finish();
 			    }
 			})
-		.setPositiveButton("Download",
+		.setPositiveButton(
+			getResources().getString(
+				R.string.dialog_download_button),
 			new DialogInterface.OnClickListener() {
 
 			    @Override
 			    public void onClick(DialogInterface dialog,
 				    int which) {
-				// TODO Auto-generated method stub
-
-				noOfTasksRemaining = 2;
-				DownloadInBackground task = new DownloadInBackground();
-				task.execute(new String[] { baseLink, path,
-					"aa" });
-				DownloadInBackground task1 = new DownloadInBackground();
-				task1.execute(new String[] { hansWehrLink,
-					path, "hw4" });
-				finish();
+				Intent i = new Intent(getBaseContext(),
+					DownloadService.class);
+				i.putExtra("url", hansWehrLink);
+				i.putExtra("path", path);
+				i.putExtra("fileName", dict.getReference());
+				startService(i);
+				setupProgressDialog(prefs.getBoolean(INDETERMINATE_STAGE, false));
 			    }
 			}).create();
 	alertDialog.show();
-    }
-
-    public void run() {
-	if (!prefs.getBoolean(FIRST_TIME_PREFS_KEY, false)) {
-	    if (!isNetworkAvailable()) {
-		showInternetConnectionDialog();
-	    } else {
-		showDownloadDialog();
-	    }
-	} else {
-	    //Fix to prevent images from showing in gallery
-	    File noMediaFile = new File(path, ".nomedia");
-	    if (!noMediaFile.exists()) {
-		noMediaFile.mkdir();
-	    }
-	    openInBrowser();
-
-	}
-
     }
 
     public void showInternetConnectionDialog() {
@@ -122,7 +242,7 @@ public class MainActivity extends Activity {
 		.setTitle("No network connection")
 		.setMessage(
 			"Internet connection required. Please connect to the Internet.")
-		.setNeutralButton("Go to Settings",
+		.setNeutralButton("Go to Device Settings",
 			new DialogInterface.OnClickListener() {
 
 			    @Override
@@ -136,7 +256,7 @@ public class MainActivity extends Activity {
 	alertDialog.show();
     }
 
-    /**Once the user returns from the Settings, run the app process again */
+    /** Once the user returns from the Settings, run the app process again */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 	// TODO Auto-generated method stub
@@ -145,8 +265,8 @@ public class MainActivity extends Activity {
 	    run();
 	}
     }
-    
-    /**Check if an active network connection is available*/
+
+    /** Check if an active network connection is available */
     public boolean isNetworkAvailable() {
 	ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 	NetworkInfo networkInfo = cm.getActiveNetworkInfo();
@@ -158,266 +278,124 @@ public class MainActivity extends Activity {
 	return false;
     }
 
-    /**Overwrite the Javascript Configuration file that tells the web app 
-     * which dictionaries are available to be used*/
-    public void OverwriteConfigFile() {
-	String content = getResources().getString(R.string.config_file_base)
-		+ getResources().getString(R.string.config_file_var_open)
-		+ getResources().getString(R.string.config_file_hw4)
-		+ getResources().getString(R.string.config_file_var_close);
+    private void referenceViews() {
+	imdisplayImage = (TouchImageView) findViewById(R.id.imshow);
+	imdisplayImage.setMaxZoom(4);
+	imdisplayImage.maintainZoomAfterSetImage(false);
 
-	File file = new File(path, "mawrid-conf.js");
+	topNextPageButton = (Button) findViewById(R.id.bTopNextPage);
+	topNextPageButton.setOnClickListener(this);
+	topLastPageButton = (Button) findViewById(R.id.bTopPreviousPage);
+	topLastPageButton.setOnClickListener(this);
 
-	if (file.exists()) {
-	    file.delete();
+    }
+
+    private void organiseFileStructure() {
+	// Delete all other files except for img/hw4/ folder
+	File file = new File(path);
+	File imgFile = new File(path + "img/");
+	for (File mFile : file.listFiles()) {
+	    if (!mFile.getPath().toString()
+		    .equals(imgFile.getPath().toString())) {
+		DeleteRecursive(mFile);
+		Log.v("file", mFile.getPath().toString());
+	    }
 	}
 
-	try {
-	    FileOutputStream fos = new FileOutputStream(file);
-	    fos.write(content.getBytes());
-	    fos.close();
-	} catch (IOException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
+	editor.putBoolean(REORGANISE_FILES_STRUCTURE_PREFS_KEY, true);
+	editor.commit();
+    }
+
+    private void DeleteRecursive(File fileOrDirectory) {
+
+	if (fileOrDirectory.isDirectory())
+	    for (File child : fileOrDirectory.listFiles())
+		DeleteRecursive(child);
+
+	fileOrDirectory.delete();
+
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+	// TODO Auto-generated method stub
+	setIntent(intent);
+	handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+	// TODO Auto-generated method stub
+	if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+	    String query = intent.getStringExtra(SearchManager.QUERY);
+	    searchInterface.search(query);
+	    displayImageUsingIndex();
+	}
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+	// TODO Auto-generated method stub
+	MenuInflater inflater = getMenuInflater();
+	inflater.inflate(R.menu.imageviewer_activity_actions, menu);
+
+	// Get the SearchView and set the searchable configuration
+	SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+	SearchView searchView = (SearchView) menu.findItem(R.id.action_search)
+		.getActionView();
+
+	searchView.setSearchableInfo(searchManager
+		.getSearchableInfo(getComponentName()));
+	searchView.setIconifiedByDefault(true);
+	return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+	// TODO Auto-generated method stub
+	switch (item.getItemId()) {
+	case R.id.action_search:
+	    return true;
+	case R.id.action_about:
+	    Intent i = new Intent(getApplicationContext(), AboutActivity.class);
+	    startActivity(i);
+	    return true;
+	case R.id.action_settings:
+	    // Add in Settings Activity when update for other dictionaries is
+	    // added
+	    /*
+	     * Intent j = new Intent(getApplicationContext(),
+	     * SettingsActivity.class); startActivity(j);
+	     */
+	    return true;
+	default:
+	    return super.onOptionsItemSelected(item);
 	}
 
     }
 
-    public void openInBrowser() {
-	File file = new File(path, "aa.html");
-	// Above Android 4.0, Chrome is supported so use that
-	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-	    try {
-		Intent i = new Intent("android.intent.action.MAIN");
-		i.setComponent(ComponentName
-			.unflattenFromString("com.android.chrome/com.android.chrome.Main"));
-		i.addCategory("android.intent.category.LAUNCHER");
-		i.setData(Uri.fromFile(file));
-		i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		getApplicationContext().startActivity(i);
-		finish();
-	    } catch (ActivityNotFoundException e) {
-		Toast.makeText(getApplicationContext(),
-			"Please install Google Chrome first",
-			Toast.LENGTH_SHORT).show();
-
+    @Override
+    public void onClick(View v) {
+	// TODO Auto-generated method stub
+	switch (v.getId()) {
+	case R.id.bTopNextPage:
+	    // case R.id.bBottomNextPage:
+	    searchInterface.setIndex(searchInterface.getIndex() + 1);
+	    displayImageUsingIndex();
+	    break;
+	case R.id.bTopPreviousPage:
+	    // case R.id.bBottomPreviousPage:
+	    if (searchInterface.getIndex() > 1) {
+		searchInterface.setIndex(searchInterface.getIndex() - 1);
 	    }
-	} else {
-	    // Below Android 4.0, use default browser instead
-	    Intent i = new Intent(Intent.ACTION_VIEW);
-	    i.setClassName("com.android.browser",
-		    "com.android.browser.BrowserActivity");
-	    i.setData(Uri.fromFile(file));
-	    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-	    getApplicationContext().startActivity(i);
-	    finish();
-	}
-
-    }
-
-    private class DownloadInBackground extends
-	    AsyncTask<String, Integer, String> {
-
-	private NotificationManager mNotifyManager;
-	private NotificationCompat.Builder mBuilder;
-
-	@Override
-	protected void onPreExecute() {
-	    // TODO Auto-generated method stub
-	    mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-	    mBuilder = new NotificationCompat.Builder(getBaseContext());
-	    PendingIntent pi = PendingIntent.getActivity(
-		    getApplicationContext(), 0, new Intent(), 0);
-	    mBuilder.setContentTitle("Downloading")
-		    .setContentText("Download in progress")
-		    .setSmallIcon(android.R.drawable.stat_sys_download)
-		    .setContentIntent(pi);
-	    mNotifyManager.notify(0, mBuilder.build());
-	}
-
-	@Override
-	protected String doInBackground(String... params) {
-	    // TODO Auto-generated method stub
-	    try {
-		URL url = new URL(params[0]);
-		URLConnection connection = url.openConnection();
-		connection.connect();
-		int fileLength = connection.getContentLength();
-		String path = params[1];
-		String fileName = params[2];
-		File myDir = new File(path);
-		myDir.mkdirs();
-		File file = new File(myDir, fileName);
-		if (file.exists())
-		    file.delete();
-		// Download the file
-		InputStream input = new BufferedInputStream(url.openStream());
-		OutputStream output = new FileOutputStream(file);
-
-		byte data[] = new byte[1024];
-		long total = 0;
-		int count;
-		int percentComplete = 0;
-		while ((count = input.read(data)) != -1) {
-		    total += count;
-		    if (percentComplete + 1 == (int) (total * 100 / fileLength)) {
-			percentComplete = (int) (total * 100 / fileLength);
-			publishProgress(percentComplete);
-		    }
-		    output.write(data, 0, count);
-		}
-		output.flush();
-		output.close();
-		input.close();
-
-		publishProgress(101);
-		Unzip(path + fileName, path);
-		file.delete();
-		File noMediaFile = new File(path, ".nomedia");
-		noMediaFile.mkdir();
-		return null;
-	    } catch (Exception e) {
-		e.printStackTrace();
-		return e.toString();
-	    }
-
-	}
-
-	@Override
-	protected void onProgressUpdate(Integer... values) {
-	    // TODO Auto-generated method stub
-	    mBuilder.setProgress(100, values[0], false);
-	    if (values[0] == 101) {
-		mBuilder.setProgress(0, 0, true);
-		mBuilder.setContentTitle("Unzipping").setContentText(
-			"Unzip In Progress");
-	    }
-	    mNotifyManager.notify(0, mBuilder.build());
-	}
-
-	@Override
-	protected void onPostExecute(String result) {
-	    // TODO Auto-generated method stub
-	    PendingIntent pendingIntent = PendingIntent.getActivity(
-		    getApplicationContext(), 0, new Intent(
-			    getApplicationContext(), MainActivity.class),
-		    PendingIntent.FLAG_ONE_SHOT);
-	    // If download failed
-	    if (result != null) {
-		mBuilder.setContentTitle("Download Failed")
-			.setContentText(
-				"Click to download the necessary files again.")
-			.setProgress(0, 0, false)
-			.setSmallIcon(android.R.drawable.stat_sys_download_done)
-			.setContentIntent(pendingIntent);
-		mNotifyManager.notify(0, mBuilder.build());
-
-		Toast.makeText(getApplicationContext(),
-			"Download failed. Please try again.",
-			Toast.LENGTH_SHORT).show();
-
-	    } else {
-		// If download succeeded
-		noOfTasksRemaining--;
-		if (noOfTasksRemaining == 0) {
-
-		    mBuilder.setContentTitle("Download Complete")
-			    .setContentText(
-				    "All files have been downloaded successfully")
-			    .setProgress(0, 0, false)
-			    .setSmallIcon(
-				    android.R.drawable.stat_sys_download_done)
-			    .setContentIntent(pendingIntent);
-		    mNotifyManager.notify(0, mBuilder.build());
-
-		    Toast.makeText(getApplicationContext(),
-			    "All files have been successfully downloaded",
-			    Toast.LENGTH_SHORT).show();
-
-		    OverwriteConfigFile();
-		    editor.putBoolean(FIRST_TIME_PREFS_KEY, true);
-		    editor.commit();
-		    openInBrowser();
-		}
-	    }
+	    displayImageUsingIndex();
+	    break;
 
 	}
     }
 
-    public void Unzip(String zipFile, String location) {
-	int BUFFER_SIZE = 1024;
-	int count = 0;
-	byte[] buffer = new byte[BUFFER_SIZE];
-
-	try {
-	    if (!location.endsWith("/")) {
-		location += "/";
-	    }
-	    File f = new File(location);
-	    if (!f.isDirectory()) {
-		f.mkdirs();
-	    }
-
-	    ZipInputStream zin = new ZipInputStream(new BufferedInputStream(
-		    new FileInputStream(zipFile), BUFFER_SIZE));
-	    try {
-		ZipEntry ze = null;
-		while ((ze = zin.getNextEntry()) != null) {
-		    String path = location + ze.getName();
-		    File unzipFile = new File(path);
-
-		    if (ze.isDirectory()) {
-			if (!unzipFile.isDirectory()) {
-			    unzipFile.mkdirs();
-			}
-		    } else {
-			// check for and create parent directories if
-			// they don't
-			// exist
-			File parentDir = unzipFile.getParentFile();
-			if (null != parentDir) {
-			    if (!parentDir.isDirectory()) {
-				parentDir.mkdirs();
-			    }
-			}
-
-			// unzip the file
-			FileOutputStream out = new FileOutputStream(unzipFile,
-				false);
-			BufferedOutputStream fout = new BufferedOutputStream(
-				out, BUFFER_SIZE);
-			try {
-			    while ((count = zin.read(buffer, 0, BUFFER_SIZE)) != -1) {
-				fout.write(buffer, 0, count);
-			    }
-
-			    zin.closeEntry();
-			} finally {
-			    fout.flush();
-			    fout.close();
-
-			}
-		    }
-		}
-	    } finally {
-		zin.close();
-	    }
-	} catch (Exception e) {
-	    Log.e("Unzip", "Unzip exception", e);
-	}
-
-    }
-
-    public static double remainingLocalStorage() {
-	final double SIZE_KB = 1024.0;
-
-	final double SIZE_GB = SIZE_KB * SIZE_KB * SIZE_KB;
-
-	StatFs stat = new StatFs(Environment.getExternalStorageDirectory()
-		.getPath());
-	stat.restat(Environment.getExternalStorageDirectory().getPath());
-	double bytesAvailable = (double) stat.getBlockSize()
-		* (double) stat.getAvailableBlocks();
-	return bytesAvailable / SIZE_GB;
+    private void displayImageUsingIndex() {
+	Bitmap bmp = BitmapFactory.decodeFile(searchInterface
+		.getImagePathForIndex());
+	imdisplayImage.setImageBitmap(bmp);
     }
 }

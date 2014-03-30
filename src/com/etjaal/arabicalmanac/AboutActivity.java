@@ -10,8 +10,9 @@ public class AboutActivity extends Activity{
     protected void onCreate(Bundle savedInstanceState) {
 	// TODO Auto-generated method stub
 	super.onCreate(savedInstanceState);
-	Toast.makeText(this, "About Activity", Toast.LENGTH_SHORT).show();
+	setContentView(R.layout.activity_about);
 	getActionBar().setDisplayHomeAsUpEnabled(true);
+	
     }
     
     

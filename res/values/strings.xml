@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Arabic Almanac</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_about">About</string>
+    <string name="action_search">Search</string>
+    <string name="search_hint">Search Arabic root letters</string>
+    <string name="dialog_title">Warning</string>
+    <string name="dialog_message">The Arabic Almanac app needs to download some necessay files, which can be large (~ 60 MB).
+    							To avoid extra data usage charges, please use Wi-Fi. </string>
+    <string name="dialog_cancel_button">Cancel</string>
+    <string name="dialog_download_button">Download</string>
+    <string name="progress_bar_download_title">Downloading</string>
+    <string name="progress_bar_download_message">Download in Progress&#8230;</string>
+    <string name="progress_bar_unzip_title">Unzipping</string>
+    <string name="progress_bar_unzip_message">Unzip in Progress&#8230;</string>
+    <string name="previous_page_button">Previous Page</string>
+    <string name="next_page_button">Next Page</string>
+    <string name="about_activity_text">This app has been put together to help students of the Arabic language.
+        Instead of having to carry around a bulky dictionary (believe me, I\'ve been there), you can now
+        access the same information at the luxury of your fingertips.
+        \n
+        \nYou can search for the roots of a word either using by an Arabic keyboard or by using 
+        roman (english) letters in case you don\'t have an Arabic keyboard. The letters are 
+        replaced according to the following table:
+        \n\nDouble letters:\n
+		\t th/v/V = "ث" \t\t gh/g/G = "غ"\n
+		\t kh/x/X = "خ" \t\t sh/$ = "ش"\n
+		\t dh = "ذ" \n
+		\n
+		Different cases:\n
+		\t d = "د" \t\t  t = "ت"\n
+		\t D = "ض"\t T = "ط"\n
+		\t z = "ز" \t\t  h = "ه"\n
+		\t Z = "ظ" \t H = "ح"\n
+		\t s = "س" \n
+		\t S = "ص" \n
+		\n
+		All other "normal" letters:\n
+		\t a/A = "ا" \t\t q/Q   = "ق"\n
+		\t b/B = "ب" \t k/K   = "ك"\n
+		\t j/J = "ج" \t\t l/L   = "ل"\n
+		\t No.7 = "ح"  m/M = "م"\n
+		\t r/R = "ر" \t\t n/N   = "ن"\n
+		\t w/W = "و" \t y/Y   = "ي"\n
+		\t f/F = "ف" \t e/E/3 = "ع"\n
+		\nPlease remember this developer in your duaas!!</string>
+
+</resources>

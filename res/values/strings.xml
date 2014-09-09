@@ -2,8 +2,10 @@
 <resources>
 
     <string name="app_name">Arabic Almanac</string>
+    <string name="app_version_name">2.1</string>
     <string name="action_settings">Settings</string>
-    <string name="action_about">About</string>
+    <string name="action_help">Help</string>
+    <string name="action_share">Share</string>
     <string name="action_search">Search</string>
     <string name="search_hint">Search Arabic root letters</string>
     <string name="dialog_title">Warning</string>
@@ -17,34 +19,45 @@
     <string name="progress_bar_unzip_message">Unzip in Progress&#8230;</string>
     <string name="previous_page_button">Previous Page</string>
     <string name="next_page_button">Next Page</string>
-    <string name="about_activity_text">This app has been put together to help students of the Arabic language.
-        Instead of having to carry around a bulky dictionary (believe me, I\'ve been there), you can now
-        access the same information at the luxury of your fingertips.
-        \n
-        \nYou can search for the roots of a word either using by an Arabic keyboard or by using 
-        roman (english) letters in case you don\'t have an Arabic keyboard. The letters are 
-        replaced according to the following table:
-        \n\nDouble letters:\n
-		\t th/v/V = "ث" \t\t gh/g/G = "غ"\n
-		\t kh/x/X = "خ" \t\t sh/$ = "ش"\n
-		\t dh = "ذ" \n
-		\n
-		Different cases:\n
-		\t d = "د" \t\t  t = "ت"\n
-		\t D = "ض"\t T = "ط"\n
-		\t z = "ز" \t\t  h = "ه"\n
-		\t Z = "ظ" \t H = "ح"\n
-		\t s = "س" \n
-		\t S = "ص" \n
-		\n
-		All other "normal" letters:\n
-		\t a/A = "ا" \t\t q/Q   = "ق"\n
-		\t b/B = "ب" \t k/K   = "ك"\n
-		\t j/J = "ج" \t\t l/L   = "ل"\n
-		\t No.7 = "ح"  m/M = "م"\n
-		\t r/R = "ر" \t\t n/N   = "ن"\n
-		\t w/W = "و" \t y/Y   = "ي"\n
-		\t f/F = "ف" \t e/E/3 = "ع"\n
-		\nPlease remember this developer in your duaas!!</string>
+    <string name="faq_activity_text">
+<![CDATA[<b>Frequently Asked Questions</b><br><br>
+        <b>How to use the application?</b><br>
+To search for a word please click on the search icon and enter the root letters
+of the word you would like to search for in Arabic or Roman Arabic. To navigate the dictionary, please use the Next page and Previous Page buttons to do so. To zoom into the image pinch or double tap the screen and translate the image by swiping in the desired direction.<br>
+<br><b>Who is this application for?</b><br>
+This app has been put together to help students of the Arabic language. Instead of having to carry around a bulky dictionary 
+(believe me, I\'ve been there), you can now access the same information at the luxury of your fingertips.<br>
+<br><b>How do I find the root letters of an Arabic word?</b><br>
+A brief tutorial on how to find the root letters of an Arabic word can be found 
+<a href="http://arabicar.tengugo.com/Arabic/Arabic_1/Part_2_-_Useful_Arabic/lesson_7c_roots_and_patterns"/>here</a><br>
+<br><b>How to install an Arabic Keyboard?</b><br>
+Please download <a href="https://play.google.com/store/apps/details?id=com.iqt.iqqijni.arabic&hl=en"/>this</a> app to install an Arabic keyboard <br>
+<br><b>My phone does not support an Arabic keyboard?</b><br>
+You will have to suffice by using Roman Arabic to search<br>
+<br><b>How are the Roman Arabic letters mapped?</b><br>
+You can search using roman (english) letters in case you don\'t have an Arabic keyboard. The letters are replaced according to the following table:
+        <pre><br><br>Double letters:<br>
+		th/v/V = "ث" \t gh/g/G = "غ" \t kh/x/X = "خ" \t sh/$ = "ش" \t dh = "ذ" <br>	
+		<br>
+		Different cases:<br>
+		d = "د" \t t = "ت" \t D = "ض" \t T = "ط" \t z = "ز" \t h = "ه" \t Z = "ظ" \t H = "ح"
+		 \t s = "س" \t  S = "ص"<br> 
+		<br>
+		All other "normal" letters:<br>
+		a/A = "ا" \t q/Q   = "ق"
+		\t b/B = "ب" \t k/K   = "ك"
+		\t j/J = "ج" \t l/L   = "ل"
+		\t No.7 = "ح" \t m/M = "م"
+		\t r/R = "ر" \t n/N   = "ن"
+		\t w/W = "و" \t y/Y   = "ي"
+		\t f/F = "ف" \t e/E/3 = "ع"<br>
+<br><b>What will the money raised from donations be used for?</b><br>
+The money raised from donations will be used to support the development of this application. Specifically the funds will be used to cover the overheads of iOS development.<br>
+<br><b>Will there be an iOS version?</b><br>
+If sufficient funds are raised to cover the development costs on iOS, only then will I be able to start work on an iOS version.<br>
+<br><b>When will more dictionaries be added?</b><br>
+I am a full time student with quite a few commitments, so whatever spare time I have left over is spent on developing this app. Having said that, an update should be released in the coming months that will enable users to add more dictionaries.<br>
+]]>
+    </string>
 
 </resources>

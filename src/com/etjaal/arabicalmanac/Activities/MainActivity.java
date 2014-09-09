@@ -1,6 +1,12 @@
-package com.etjaal.arabicalmanac;
+package com.etjaal.arabicalmanac.Activities;
 
 import java.io.File;
+
+import com.etjaal.arabicalmanac.R;
+import com.etjaal.arabicalmanac.Objects.Dictionary;
+import com.etjaal.arabicalmanac.Services.DownloadService;
+import com.etjaal.arabicalmanac.Tools.SearchInterface;
+import com.etjaal.arabicalmanac.Tools.TouchImageView;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -16,6 +22,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -30,10 +37,12 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.SearchView;
+import android.widget.ShareActionProvider;
 import android.widget.Toast;
 
 public class MainActivity extends FragmentActivity implements OnClickListener {
 
+    private String TAG = "MainActivity";
     private TouchImageView imdisplayImage;
     private Button topNextPageButton, topLastPageButton;
     private Dictionary dict;
@@ -49,23 +58,36 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     // private String hansWehrLink =
     // "http://ia600803.us.archive.org/2/items/ArabicAlmanac/hw4.zip";
     private String hansWehrLink = "https://dl.dropboxusercontent.com/u/63542577/hw4.zip";
+    // private String hansWehrLink =
+    // "https://www.dropbox.com/s/cy9qu1pgsa39b2z/hw4.zip?dl=1";
     private IntentFilter mFilter = new IntentFilter("download");
     private ProgressDialog progressDialog;
-
+    private ShareActionProvider mShareActionProvider;
+    private Intent shareIntent;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	// TODO Auto-generated method stub
 	super.onCreate(savedInstanceState);
+	overridePendingTransition(R.anim.pull_in_from_left, R.anim.hold);
 	setContentView(R.layout.activity_main);
 	path = Environment.getExternalStorageDirectory().toString() + "/"
 		+ getResources().getString(R.string.app_name) + "/";
+	// Initialise Prefs
 	prefs = PreferenceManager.getDefaultSharedPreferences(this);
 	editor = prefs.edit();
+
 	mFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
+	// Load views from XML
 	referenceViews();
+
 	dict = new Dictionary("hw4", "Hans Wehr");
+
 	searchInterface = new SearchInterface(getApplicationContext(), dict);
 	handleIntent(getIntent());
+
+	// If download service is not running then run app
+	// Otherwise manage notifications and setup Progress Dialog
 	if (!prefs.getBoolean(DOWNLOAD_SERVICE_RUNNING, false)) {
 	    run();
 	} else {
@@ -83,6 +105,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 	progressDialog.setCancelable(false);
 	progressDialog.setCanceledOnTouchOutside(false);
+	// Close app on press
 	progressDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Minimise",
 		new DialogInterface.OnClickListener() {
 
@@ -92,6 +115,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 			finish();
 		    }
 		});
+
 	if (indeterminate) {
 	    // If unzipping files
 	    progressDialog.setIndeterminate(true);
@@ -119,12 +143,12 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-	    // TODO Action when in foreground
 	    // Update progress bar with progress data
 	    if (intent.getAction().equals("download")) {
 		int progress = intent.getExtras().getInt("progress");
 		if (progress >= 0) {
 		    progressDialog.setProgress(progress);
+		    // If unzipping
 		    if (progress == 101) {
 			progressDialog.setIndeterminate(true);
 			progressDialog.setProgressNumberFormat(null);
@@ -158,22 +182,26 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 
     @Override
     protected void onStart() {
-	// TODO Auto-generated method stub
 	registerReceiver(mReceiver, mFilter);
 	super.onStart();
-
     }
 
     @Override
     protected void onStop() {
-	// TODO Auto-generated method stub
 	unregisterReceiver(mReceiver);
 	super.onStop();
     }
 
+    @Override
+    protected void onPause() {
+	overridePendingTransition(R.anim.hold, R.anim.push_out_to_left);
+	super.onPause();
+    }
+
     private void run() {
-	// TODO Auto-generated method stub
+	// If first time running app
 	if (!prefs.getBoolean(FIRST_TIME_PREFS_KEY, false)) {
+	    // If no connection open settings otherwise commence download
 	    if (!isNetworkAvailable()) {
 		showInternetConnectionDialog();
 	    } else {
@@ -184,6 +212,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	    if (!prefs.getBoolean(REORGANISE_FILES_STRUCTURE_PREFS_KEY, false)) {
 		organiseFileStructure();
 	    }
+	    // TODO: Check if this is actually working
 	    // Fix to prevent images from showing in gallery
 	    if (!prefs.getBoolean(IMAGES_IN_GALLERY_FIX_PREFS_KEY, false)) {
 		File noMediaFile = new File(path, ".nomedia");
@@ -211,7 +240,6 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 			    @Override
 			    public void onClick(DialogInterface dialog,
 				    int which) {
-				// TODO Auto-generated method stub
 				dialog.cancel();
 				finish();
 			    }
@@ -224,13 +252,15 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 			    @Override
 			    public void onClick(DialogInterface dialog,
 				    int which) {
-				Intent i = new Intent(getBaseContext(),
+				// Start download
+				Intent i = new Intent(getApplicationContext(),
 					DownloadService.class);
 				i.putExtra("url", hansWehrLink);
 				i.putExtra("path", path);
 				i.putExtra("fileName", dict.getReference());
 				startService(i);
-				setupProgressDialog(prefs.getBoolean(INDETERMINATE_STAGE, false));
+				setupProgressDialog(prefs.getBoolean(
+					INDETERMINATE_STAGE, false));
 			    }
 			}).create();
 	alertDialog.show();
@@ -248,7 +278,8 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 			    @Override
 			    public void onClick(DialogInterface dialog,
 				    int which) {
-				// TODO Auto-generated method stub
+				// Open settings so user can enable network
+				// access
 				startActivityForResult(new Intent(
 					Settings.ACTION_WIRELESS_SETTINGS), 0);
 			    }
@@ -278,6 +309,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	return false;
     }
 
+    /** Load the views from XML */
     private void referenceViews() {
 	imdisplayImage = (TouchImageView) findViewById(R.id.imshow);
 	imdisplayImage.setMaxZoom(4);
@@ -291,6 +323,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     }
 
     private void organiseFileStructure() {
+	// TODO: Check if this is needed and what it actually does
 	// Delete all other files except for img/hw4/ folder
 	File file = new File(path);
 	File imgFile = new File(path + "img/");
@@ -307,38 +340,42 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     }
 
     private void DeleteRecursive(File fileOrDirectory) {
-
 	if (fileOrDirectory.isDirectory())
 	    for (File child : fileOrDirectory.listFiles())
 		DeleteRecursive(child);
-
 	fileOrDirectory.delete();
 
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
-	// TODO Auto-generated method stub
 	setIntent(intent);
 	handleIntent(intent);
     }
 
     private void handleIntent(Intent intent) {
-	// TODO Auto-generated method stub
+	// Explicitly handle search intent
 	if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
 	    String query = intent.getStringExtra(SearchManager.QUERY);
 	    searchInterface.search(query);
 	    displayImageUsingIndex();
+	    linkShareIntentWithShareProvider();
 	}
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-	// TODO Auto-generated method stub
 	MenuInflater inflater = getMenuInflater();
 	inflater.inflate(R.menu.imageviewer_activity_actions, menu);
 
-	// Get the SearchView and set the searchable configuration
+	// Link ShareActionProvider with menu item
+	MenuItem item = menu.findItem(R.id.action_share);
+	mShareActionProvider = (ShareActionProvider) item.getActionProvider();
+	if(mShareActionProvider != null){
+	    linkShareIntentWithShareProvider();
+	}
+
+	// Get the SearchView and set the search-able configuration
 	SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
 	SearchView searchView = (SearchView) menu.findItem(R.id.action_search)
 		.getActionView();
@@ -349,16 +386,24 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	return true;
     }
 
+    private void linkShareIntentWithShareProvider() {
+	// TODO Auto-generated method stub
+	    setupShareIntent();
+	    mShareActionProvider.setShareIntent(shareIntent);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-	// TODO Auto-generated method stub
 	switch (item.getItemId()) {
 	case R.id.action_search:
 	    return true;
-	case R.id.action_about:
-	    Intent i = new Intent(getApplicationContext(), AboutActivity.class);
+	case R.id.action_help:
+	    Intent i = new Intent(getBaseContext(), AboutActivity.class);
 	    startActivity(i);
 	    return true;
+	case R.id.action_share:
+	    setupShareIntent();
+	    startActivity(Intent.createChooser(shareIntent, "Send to"));
 	case R.id.action_settings:
 	    // Add in Settings Activity when update for other dictionaries is
 	    // added
@@ -373,6 +418,17 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 
     }
 
+    private void setupShareIntent() {
+	// TODO Auto-generated method stub
+	String filePath = searchInterface.getImagePathForIndex();
+	shareIntent = new Intent();
+	shareIntent.setAction(Intent.ACTION_SEND);
+	shareIntent.putExtra(Intent.EXTRA_STREAM,
+		Uri.fromFile(new File(filePath)));
+	shareIntent.setType("image/png");
+
+    }
+
     @Override
     public void onClick(View v) {
 	// TODO Auto-generated method stub
@@ -381,6 +437,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	    // case R.id.bBottomNextPage:
 	    searchInterface.setIndex(searchInterface.getIndex() + 1);
 	    displayImageUsingIndex();
+	    linkShareIntentWithShareProvider();
 	    break;
 	case R.id.bTopPreviousPage:
 	    // case R.id.bBottomPreviousPage:
@@ -388,11 +445,13 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 		searchInterface.setIndex(searchInterface.getIndex() - 1);
 	    }
 	    displayImageUsingIndex();
+	    linkShareIntentWithShareProvider();
 	    break;
 
 	}
     }
 
+    /** Display the image in the Image view */
     private void displayImageUsingIndex() {
 	Bitmap bmp = BitmapFactory.decodeFile(searchInterface
 		.getImagePathForIndex());

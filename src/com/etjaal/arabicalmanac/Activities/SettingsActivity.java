@@ -1,4 +1,4 @@
-package com.etjaal.arabicalmanac;
+package com.etjaal.arabicalmanac.Activities;
 
 import android.app.Activity;
 import android.os.Bundle;

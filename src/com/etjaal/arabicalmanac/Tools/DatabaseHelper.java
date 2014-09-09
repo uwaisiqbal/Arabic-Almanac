@@ -1,4 +1,4 @@
-package com.etjaal.arabicalmanac;
+package com.etjaal.arabicalmanac.Tools;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;

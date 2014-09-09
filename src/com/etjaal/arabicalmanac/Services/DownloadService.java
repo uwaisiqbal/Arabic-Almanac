@@ -1,4 +1,4 @@
-package com.etjaal.arabicalmanac;
+package com.etjaal.arabicalmanac.Services;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -27,6 +27,7 @@ public class DownloadService extends Service {
     private static final String FIRST_TIME_PREFS_KEY = "firstTime";
     private static final String DOWNLOAD_SERVICE_RUNNING = "downloadServiceRunning";
     private static final String INDETERMINATE_STAGE = "indeterminateStage";
+    String TAG = "Download Service";
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {

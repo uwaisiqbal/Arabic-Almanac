@@ -1,4 +1,4 @@
-package com.etjaal.arabicalmanac;
+package com.etjaal.arabicalmanac.Objects;
 
 public class Dictionary {
 

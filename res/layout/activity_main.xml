@@ -57,7 +57,7 @@
         android:layout_below="@+id/llTopButtons"
         android:background="?android:attr/dividerHorizontal" />
 
-    <com.etjaal.arabicalmanac.TouchImageView
+    <com.etjaal.arabicalmanac.Tools.TouchImageView
         android:id="@+id/imshow"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

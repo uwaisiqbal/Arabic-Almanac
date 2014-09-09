@@ -1,4 +1,7 @@
-package com.etjaal.arabicalmanac;
+package com.etjaal.arabicalmanac.Services;
+
+import com.etjaal.arabicalmanac.R;
+import com.etjaal.arabicalmanac.Activities.MainActivity;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;

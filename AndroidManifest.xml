@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.etjaal.arabicalmanac"
-    android:versionCode="10"
-    android:versionName="2.0" >
+    android:versionCode="13"
+    android:versionName="@string/app_version_name" >
 
     <uses-sdk
         android:minSdkVersion="14"
-        android:targetSdkVersion="19" />
+        android:targetSdkVersion="20" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.android.vending.BILLING" />
 
     <application
         android:allowBackup="true"
@@ -20,14 +21,13 @@
         android:label="@string/app_name"
         android:theme="@android:style/Theme.Holo.Light.DarkActionBar" >
         <activity
-            android:name="com.etjaal.arabicalmanac.MainActivity"
+            android:name="com.etjaal.arabicalmanac.Activities.MainActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.SEARCH" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
@@ -36,20 +36,41 @@
                 android:resource="@xml/searchable" />
         </activity>
         <activity
-            android:name="com.etjaal.arabicalmanac.AboutActivity"
+            android:name="com.etjaal.arabicalmanac.Activities.AboutActivity"
             android:label="@string/app_name"
-            android:parentActivityName="com.etjaal.arabicalmanac.MainActivity"
+            android:parentActivityName="com.etjaal.arabicalmanac.ActivitiesMainActivity"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.etjaal.arabicalmanac.SettingsActivity"
+            android:name="com.etjaal.arabicalmanac.Activities.SettingsActivity"
             android:label="@string/app_name"
-            android:parentActivityName="com.etjaal.arabicalmanac.MainActivity"
+            android:parentActivityName="com.etjaal.arabicalmanac.Activities.MainActivity"
             android:screenOrientation="portrait" >
         </activity>
-        <service android:name=".DownloadService"></service>
+        
+        <activity
+            android:name="com.etjaal.arabicalmanac.Activities.AboutExtensionActivity"
+            android:label="@string/app_name"
+            android:parentActivityName="com.etjaal.arabicalmanac.Activities.AboutActivity"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="Activities.FAQActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="Activities.References" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="Activities.AboutVersionActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
-        <receiver android:name="com.etjaal.arabicalmanac.MyReceiver">
+        <service android:name=".Services.DownloadService" >
+        </service>
+
+        <receiver android:name="com.etjaal.arabicalmanac.Services.MyReceiver" >
             <intent-filter>
                 <action android:name="download" />
             </intent-filter>

@@ -1,4 +1,4 @@
-package com.etjaal.arabicalmanac;
+package com.etjaal.arabicalmanac.Tools;
 
 /*
  * TouchImageView.java
@@ -11,11 +11,11 @@ package com.etjaal.arabicalmanac;
  */
 
 
-import static com.etjaal.arabicalmanac.TouchImageView.State.ANIMATE_ZOOM;
-import static com.etjaal.arabicalmanac.TouchImageView.State.DRAG;
-import static com.etjaal.arabicalmanac.TouchImageView.State.FLING;
-import static com.etjaal.arabicalmanac.TouchImageView.State.NONE;
-import static com.etjaal.arabicalmanac.TouchImageView.State.ZOOM;
+import static com.etjaal.arabicalmanac.Tools.TouchImageView.State.ANIMATE_ZOOM;
+import static com.etjaal.arabicalmanac.Tools.TouchImageView.State.DRAG;
+import static com.etjaal.arabicalmanac.Tools.TouchImageView.State.FLING;
+import static com.etjaal.arabicalmanac.Tools.TouchImageView.State.NONE;
+import static com.etjaal.arabicalmanac.Tools.TouchImageView.State.ZOOM;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;

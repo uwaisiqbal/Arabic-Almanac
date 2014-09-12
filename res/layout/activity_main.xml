@@ -56,39 +56,22 @@
         android:layout_height="1dip"
         android:layout_below="@+id/llTopButtons"
         android:background="?android:attr/dividerHorizontal" />
+    
+    <ScrollView android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/divisor" 
+        android:layout_marginTop="2dip"
+        android:paddingLeft="7dip"
+        android:paddingRight="7dip"
+        android:paddingBottom="7dip"
+        android:scrollbarStyle="outsideOverlay"
+        android:fadeScrollbars="false">"
 
     <com.etjaal.arabicalmanac.Tools.TouchImageView
         android:id="@+id/imshow"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/divisor" 
-        android:layout_marginTop="2dip"/>
-        <!--  android:layout_above="@+id/llBottomButtons" 
-        -->
-        
+        android:layout_height="wrap_content"/>
+    </ScrollView>
 
-    <!--
-    <LinearLayout
-        android:id="@+id/llBottomButtons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:orientation="horizontal" >
-
-        <Button
-            android:id="@+id/bBottomPreviousPage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.5"
-            android:text="@string/previous_page_button" />
-
-        <Button
-            android:id="@+id/bBottomNextPage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.5"
-            android:text="@string/next_page_button" />\n
-            </LinearLayout>-->
 
 </RelativeLayout>

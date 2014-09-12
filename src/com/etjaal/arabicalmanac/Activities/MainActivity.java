@@ -36,6 +36,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageView.ScaleType;
 import android.widget.SearchView;
 import android.widget.ShareActionProvider;
 import android.widget.Toast;
@@ -64,13 +65,16 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     private ProgressDialog progressDialog;
     private ShareActionProvider mShareActionProvider;
     private Intent shareIntent;
-    
+    private String searchQuery;
+    private SearchView searchView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	// TODO Auto-generated method stub
 	super.onCreate(savedInstanceState);
 	overridePendingTransition(R.anim.pull_in_from_left, R.anim.hold);
 	setContentView(R.layout.activity_main);
+
 	path = Environment.getExternalStorageDirectory().toString() + "/"
 		+ getResources().getString(R.string.app_name) + "/";
 	// Initialise Prefs
@@ -84,7 +88,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	dict = new Dictionary("hw4", "Hans Wehr");
 
 	searchInterface = new SearchInterface(getApplicationContext(), dict);
-	handleIntent(getIntent());
+
 
 	// If download service is not running then run app
 	// Otherwise manage notifications and setup Progress Dialog
@@ -98,6 +102,38 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	    mNotifyManager.cancel(0);
 	    setupProgressDialog(prefs.getBoolean(INDETERMINATE_STAGE, false));
 	}
+
+	// Load data saved for orientation change
+	String searchIndex = null, searchQuery = null;
+	if (savedInstanceState != null) {
+	    searchIndex = savedInstanceState.getString("search_index");
+	    Log.v("Search Index", searchIndex);
+	    searchQuery = savedInstanceState.getString("search_query");
+	}
+
+	if (searchIndex != null) {
+	    searchInterface.setIndex(Integer.valueOf(searchIndex));
+	    Log.v("Integer Value of search Index",
+		    String.valueOf(searchInterface.getIndex()));
+	    displayImageUsingIndex();
+	}
+	if (searchQuery != null) {
+	    searchView.setQuery(searchQuery, false);
+	    searchView.clearFocus();
+	}
+	
+	handleIntent(getIntent());
+
+
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+	// TODO Auto-generated method stub
+	outState.putString("search_index",
+		String.valueOf(searchInterface.getIndex()));
+	Log.v(TAG, String.valueOf(searchInterface.getIndex()));
+	outState.putString("search_query", searchQuery);
     }
 
     private void setupProgressDialog(boolean indeterminate) {
@@ -371,25 +407,44 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	// Link ShareActionProvider with menu item
 	MenuItem item = menu.findItem(R.id.action_share);
 	mShareActionProvider = (ShareActionProvider) item.getActionProvider();
-	if(mShareActionProvider != null){
+	if (mShareActionProvider != null) {
 	    linkShareIntentWithShareProvider();
 	}
 
 	// Get the SearchView and set the search-able configuration
 	SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-	SearchView searchView = (SearchView) menu.findItem(R.id.action_search)
+	searchView = (SearchView) menu.findItem(R.id.action_search)
 		.getActionView();
-
 	searchView.setSearchableInfo(searchManager
 		.getSearchableInfo(getComponentName()));
 	searchView.setIconifiedByDefault(true);
+
+	SearchView.OnQueryTextListener queryTextListener = new SearchView.OnQueryTextListener() {
+
+	    @Override
+	    public boolean onQueryTextSubmit(String query) {
+		// TODO Auto-generated method stub
+		searchQuery = query;
+		return false;
+	    }
+
+	    @Override
+	    public boolean onQueryTextChange(String newText) {
+		// TODO Auto-generated method stub
+		searchQuery = newText;
+		return false;
+	    }
+	};
+
+	searchView.setOnQueryTextListener(queryTextListener);
+
 	return true;
     }
 
     private void linkShareIntentWithShareProvider() {
 	// TODO Auto-generated method stub
-	    setupShareIntent();
-	    mShareActionProvider.setShareIntent(shareIntent);
+	setupShareIntent();
+	mShareActionProvider.setShareIntent(shareIntent);
     }
 
     @Override

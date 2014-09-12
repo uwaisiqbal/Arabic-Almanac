@@ -102,43 +102,43 @@ public class SearchInterface {
     }
 
     /**Converts Roman characters in the string to their corresponding Arabic counterparts*/
-   private String convertFromRomanToArabic(String query) {
-	query = query.replaceAll("[Ø¥Ø¢Ù±Ø£Ø¡ïº€ïº€ïº�ïºƒïº…ïº‡ïº‰]", "Ø§");
-	query = query.replaceAll("[Ø¥Ø¢Ù±Ø£Ø¡ïº€ïº€ïº�ïºƒïº…ïº‡ïº‰]", "Ø§");
-	query = query.replaceAll("[ï»¯]", "ÙŠ");
-	query = query.replaceAll("th", "Ø«");
-	query = query.replaceAll("gh", "Øº");
-	query = query.replaceAll("[gG]", "Øº");
-	query = query.replaceAll("kh", "Ø®");
-	query = query.replaceAll("sh", "Ø´");
-	query = query.replaceAll("dh", "Ø°");
-	query = query.replaceAll("d", "Ø¯");
-	query = query.replaceAll("D", "Ø¶");
-	query = query.replaceAll("z", "Ø²");
-	query = query.replaceAll("Z", "Ø¸");
-	query = query.replaceAll("s", "Ø³");
-	query = query.replaceAll("S", "Øµ");
-	query = query.replaceAll("t", "Øª");
-	query = query.replaceAll("T", "Ø·");
-	query = query.replaceAll("h", "Ù‡");
-	query = query.replaceAll("H", "Ø­");
-	query = query.replaceAll("[xX]", "Ø®");
-	query = query.replaceAll("[vV]", "Ø«");
-	query = query.replaceAll("[aA]", "Ø§");
-	query = query.replaceAll("[bB]", "Ø¨");
-	query = query.replaceAll("[jJ]", "Ø¬");
-	query = query.replaceAll("[7]", "Ø­");
-	query = query.replaceAll("[rR]", "Ø±");
-	query = query.replaceAll("[3]", "Ø¹");
-	query = query.replaceAll("[eE]", "Ø¹");
-	query = query.replaceAll("[fF]", "Ù�");
-	query = query.replaceAll("[qQ]", "Ù‚");
-	query = query.replaceAll("[kK]", "Ùƒ");
-	query = query.replaceAll("[lL]", "Ù„");
-	query = query.replaceAll("[mM]", "Ù…");
-	query = query.replaceAll("[nN]", "Ù†");
-	query = query.replaceAll("[wW]", "Ùˆ");
-	query = query.replaceAll("[yY]", "ÙŠ");
+    private String convertFromRomanToArabic(String query) {
+	query = query.replaceAll("[إآٱأءﺀﺀﺁﺃﺅﺇﺉ]", "ا");
+	query = query.replaceAll("[إآٱأءﺀﺀﺁﺃﺅﺇﺉ]", "ا");
+	query = query.replaceAll("[ﻯ]", "ي");
+	query = query.replaceAll("th", "ث");
+	query = query.replaceAll("gh", "غ");
+	query = query.replaceAll("[gG]", "غ");
+	query = query.replaceAll("kh", "خ");
+	query = query.replaceAll("sh", "ش");
+	query = query.replaceAll("dh", "ذ");
+	query = query.replaceAll("d", "د");
+	query = query.replaceAll("D", "ض");
+	query = query.replaceAll("z", "ز");
+	query = query.replaceAll("Z", "ظ");
+	query = query.replaceAll("s", "س");
+	query = query.replaceAll("S", "ص");
+	query = query.replaceAll("t", "ت");
+	query = query.replaceAll("T", "ط");
+	query = query.replaceAll("h", "ه");
+	query = query.replaceAll("H", "ح");
+	query = query.replaceAll("[xX]", "خ");
+	query = query.replaceAll("[vV]", "ث");
+	query = query.replaceAll("[aA]", "ا");
+	query = query.replaceAll("[bB]", "ب");
+	query = query.replaceAll("[jJ]", "ج");
+	query = query.replaceAll("[7]", "ح");
+	query = query.replaceAll("[rR]", "ر");
+	query = query.replaceAll("[3]", "ع");
+	query = query.replaceAll("[eE]", "ع");
+	query = query.replaceAll("[fF]", "ف");
+	query = query.replaceAll("[qQ]", "ق");
+	query = query.replaceAll("[kK]", "ك");
+	query = query.replaceAll("[lL]", "ل");
+	query = query.replaceAll("[mM]", "م");
+	query = query.replaceAll("[nN]", "ن");
+	query = query.replaceAll("[wW]", "و");
+	query = query.replaceAll("[yY]", "ي");
 	return query;
     }
 

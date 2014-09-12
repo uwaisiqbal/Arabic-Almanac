@@ -100,7 +100,7 @@ public class SearchInterface {
 	}
 	return json;
     }
-
+//Comment
     /**Converts Roman characters in the string to their corresponding Arabic counterparts*/
     private String convertFromRomanToArabic(String query) {
 	query = query.replaceAll("[إآٱأءﺀﺀﺁﺃﺅﺇﺉ]", "ا");

@@ -28,6 +28,7 @@ public class SearchInterface {
 	this.dict = dict;
 	this.context = context;
 	searchIndexes = new ArrayList<String>();
+	index = 0;
 	DIRECTORY_PATH = Environment.getExternalStorageDirectory().toString() + "/"
 		+ context.getResources().getString(R.string.app_name) + "/"; 
 	parseFileToArrayList();

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.etjaal.arabicalmanac"
-    android:versionCode="13"
+    android:versionCode="14"
     android:versionName="@string/app_version_name" >
 
     <uses-sdk
@@ -20,38 +20,44 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.Holo.Light.DarkActionBar" >
+
         <activity
             android:name="com.etjaal.arabicalmanac.Activities.MainActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <action android:name="android.intent.action.SEARCH" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
 
-            <meta-data
-                android:name="android.app.searchable"
-                android:resource="@xml/searchable" />
+            <meta-data android:name="com.sec.android.support.multiwindow" android:value="true" />
+            <meta-data android:name="com.sec.minimode.icon.portrait.normal" android:resource="@drawable/ic_launcher" />
+            <meta-data android:name="com.sec.minimode.icon.landscape.normal" android:resource="@drawable/ic_launcher" />
+			<meta-data android:name="com.sec.android.multiwindow.DEFAULT_SIZE_W" android:value="632.0dip" />
+			<meta-data android:name="com.sec.android.multiwindow.DEFAULT_SIZE_H" android:value="598.0dip" />
+			<meta-data android:name="com.sec.android.multiwindow.MINIMUM_SIZE_W" android:value="632.0dip" />
+			<meta-data android:name="com.sec.android.multiwindow.MINIMUM_SIZE_H" android:value="598.0dip" />
+            <meta-data android:name="com.sec.android.multiwindow.STYLE" android:value="fixedRatio" />
+            <meta-data android:name="android.app.searchable" android:resource="@xml/searchable" />
         </activity>
         <activity
             android:name="com.etjaal.arabicalmanac.Activities.AboutActivity"
             android:label="@string/app_name"
-            android:parentActivityName="com.etjaal.arabicalmanac.ActivitiesMainActivity"
-            android:screenOrientation="portrait" >
+            android:parentActivityName="com.etjaal.arabicalmanac.ActivitiesMainActivity" >
         </activity>
         <activity
             android:name="com.etjaal.arabicalmanac.Activities.SettingsActivity"
             android:label="@string/app_name"
-            android:parentActivityName="com.etjaal.arabicalmanac.Activities.MainActivity"
-            android:screenOrientation="portrait" >
+            android:parentActivityName="com.etjaal.arabicalmanac.Activities.MainActivity" >
         </activity>
-        
         <activity
             android:name="com.etjaal.arabicalmanac.Activities.AboutExtensionActivity"
             android:label="@string/app_name"
-            android:parentActivityName="com.etjaal.arabicalmanac.Activities.AboutActivity"
-            android:screenOrientation="portrait" >
+            android:parentActivityName="com.etjaal.arabicalmanac.Activities.AboutActivity">
             <intent-filter>
                 <action android:name="Activities.FAQActivity" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -66,14 +72,14 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".Services.DownloadService" >
-        </service>
+        <service android:name=".Services.DownloadService" > </service>
 
         <receiver android:name="com.etjaal.arabicalmanac.Services.MyReceiver" >
             <intent-filter>
                 <action android:name="download" />
             </intent-filter>
         </receiver>
+        
     </application>
 
 </manifest>

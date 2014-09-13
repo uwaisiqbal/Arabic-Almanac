@@ -65,7 +65,8 @@
         android:paddingRight="7dip"
         android:paddingBottom="7dip"
         android:scrollbarStyle="outsideOverlay"
-        android:fadeScrollbars="false">"
+        android:fadeScrollbars="false"
+        android:id="@+id/svMain">
 
     <com.etjaal.arabicalmanac.Tools.TouchImageView
         android:id="@+id/imshow"

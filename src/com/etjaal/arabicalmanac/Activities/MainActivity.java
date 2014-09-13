@@ -7,6 +7,7 @@ import com.etjaal.arabicalmanac.Objects.Dictionary;
 import com.etjaal.arabicalmanac.Services.DownloadService;
 import com.etjaal.arabicalmanac.Tools.SearchInterface;
 import com.etjaal.arabicalmanac.Tools.TouchImageView;
+import com.samsung.spen.lib.multiwindow.SMultiWindowManager;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -18,6 +19,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
@@ -37,6 +39,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageView.ScaleType;
+import android.widget.ScrollView;
 import android.widget.SearchView;
 import android.widget.ShareActionProvider;
 import android.widget.Toast;
@@ -53,7 +56,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     private SharedPreferences prefs;
     private static final String FIRST_TIME_PREFS_KEY = "firstTime";
     private static final String REORGANISE_FILES_STRUCTURE_PREFS_KEY = "reorganiseFiles";
-    private static final String IMAGES_IN_GALLERY_FIX_PREFS_KEY = "galleryfix";
+    private static final String IMAGES_IN_GALLERY_FIX_PREFS_KEY = "hideImagesInGallery";
     private static final String DOWNLOAD_SERVICE_RUNNING = "downloadServiceRunning";
     private static final String INDETERMINATE_STAGE = "indeterminateStage";
     // private String hansWehrLink =
@@ -65,8 +68,9 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     private ProgressDialog progressDialog;
     private ShareActionProvider mShareActionProvider;
     private Intent shareIntent;
-    private String searchQuery;
     private SearchView searchView;
+    private String searchIndex;
+    private ScrollView scrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,51 +93,42 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 
 	searchInterface = new SearchInterface(getApplicationContext(), dict);
 
-
-	// If download service is not running then run app
-	// Otherwise manage notifications and setup Progress Dialog
-	if (!prefs.getBoolean(DOWNLOAD_SERVICE_RUNNING, false)) {
-	    run();
-	} else {
-	    // Dismiss notification bar
-	    NotificationManager mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-	    NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
-		    this);
-	    mNotifyManager.cancel(0);
-	    setupProgressDialog(prefs.getBoolean(INDETERMINATE_STAGE, false));
-	}
-
-	// Load data saved for orientation change
-	String searchIndex = null, searchQuery = null;
+	// Force system to reload options menu after a rotation
 	if (savedInstanceState != null) {
+	    invalidateOptionsMenu();
 	    searchIndex = savedInstanceState.getString("search_index");
-	    Log.v("Search Index", searchIndex);
-	    searchQuery = savedInstanceState.getString("search_query");
-	}
-
-	if (searchIndex != null) {
+	    Log.v(TAG, "Loading search index after rotation as: " + searchIndex);
 	    searchInterface.setIndex(Integer.valueOf(searchIndex));
-	    Log.v("Integer Value of search Index",
-		    String.valueOf(searchInterface.getIndex()));
 	    displayImageUsingIndex();
-	}
-	if (searchQuery != null) {
-	    searchView.setQuery(searchQuery, false);
-	    searchView.clearFocus();
-	}
-	
-	handleIntent(getIntent());
+	    linkShareIntentWithShareProvider();
+	    savedInstanceState = null;
+	} else {
+	    // If download service is not running then run app
+	    // Otherwise manage notifications and setup Progress Dialog
+	    if (!prefs.getBoolean(DOWNLOAD_SERVICE_RUNNING, false)) {
+		run();
+	    } else {
+		// Dismiss notification bar
+		NotificationManager mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
+			this);
+		mNotifyManager.cancel(0);
+		setupProgressDialog(prefs
+			.getBoolean(INDETERMINATE_STAGE, false));
+	    }
 
+	    handleIntent(getIntent());
+	}
 
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-	// TODO Auto-generated method stub
 	outState.putString("search_index",
 		String.valueOf(searchInterface.getIndex()));
-	Log.v(TAG, String.valueOf(searchInterface.getIndex()));
-	outState.putString("search_query", searchQuery);
+	Log.v(TAG,
+		"Saving search index before rotation as: "
+			+ searchInterface.getIndex());
     }
 
     private void setupProgressDialog(boolean indeterminate) {
@@ -257,7 +252,10 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 		editor.commit();
 	    }
 	    // run app
-	    searchInterface.setIndex(1);
+	    if (searchInterface.getIndex() == 0) {
+		searchInterface.setIndex(1);
+	    }
+
 	    displayImageUsingIndex();
 
 	}
@@ -347,6 +345,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 
     /** Load the views from XML */
     private void referenceViews() {
+	scrollView = (ScrollView) findViewById(R.id.svMain);
 	imdisplayImage = (TouchImageView) findViewById(R.id.imshow);
 	imdisplayImage.setMaxZoom(4);
 	imdisplayImage.maintainZoomAfterSetImage(false);
@@ -399,18 +398,19 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	}
     }
 
+    // Called only once when the menu is first created
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 	MenuInflater inflater = getMenuInflater();
 	inflater.inflate(R.menu.imageviewer_activity_actions, menu);
 
 	// Link ShareActionProvider with menu item
-	MenuItem item = menu.findItem(R.id.action_share);
-	mShareActionProvider = (ShareActionProvider) item.getActionProvider();
+	mShareActionProvider = (ShareActionProvider) menu.findItem(
+		R.id.action_share).getActionProvider();
+
 	if (mShareActionProvider != null) {
 	    linkShareIntentWithShareProvider();
 	}
-
 	// Get the SearchView and set the search-able configuration
 	SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
 	searchView = (SearchView) menu.findItem(R.id.action_search)
@@ -419,31 +419,18 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 		.getSearchableInfo(getComponentName()));
 	searchView.setIconifiedByDefault(true);
 
-	SearchView.OnQueryTextListener queryTextListener = new SearchView.OnQueryTextListener() {
-
-	    @Override
-	    public boolean onQueryTextSubmit(String query) {
-		// TODO Auto-generated method stub
-		searchQuery = query;
-		return false;
-	    }
-
-	    @Override
-	    public boolean onQueryTextChange(String newText) {
-		// TODO Auto-generated method stub
-		searchQuery = newText;
-		return false;
-	    }
-	};
-
-	searchView.setOnQueryTextListener(queryTextListener);
+	if (searchIndex != null) {
+	    searchInterface.setIndex(Integer.valueOf(searchIndex));
+	    displayImageUsingIndex();
+	    linkShareIntentWithShareProvider();
+	}
 
 	return true;
     }
 
     private void linkShareIntentWithShareProvider() {
 	// TODO Auto-generated method stub
-	setupShareIntent();
+	updateShareIntent();
 	mShareActionProvider.setShareIntent(shareIntent);
     }
 
@@ -457,30 +444,19 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	    startActivity(i);
 	    return true;
 	case R.id.action_share:
-	    setupShareIntent();
+	    linkShareIntentWithShareProvider();
 	    startActivity(Intent.createChooser(shareIntent, "Send to"));
-	case R.id.action_settings:
+	/*case R.id.action_settings:
 	    // Add in Settings Activity when update for other dictionaries is
 	    // added
 	    /*
 	     * Intent j = new Intent(getApplicationContext(),
 	     * SettingsActivity.class); startActivity(j);
-	     */
-	    return true;
+	     
+	    return true;*/
 	default:
 	    return super.onOptionsItemSelected(item);
 	}
-
-    }
-
-    private void setupShareIntent() {
-	// TODO Auto-generated method stub
-	String filePath = searchInterface.getImagePathForIndex();
-	shareIntent = new Intent();
-	shareIntent.setAction(Intent.ACTION_SEND);
-	shareIntent.putExtra(Intent.EXTRA_STREAM,
-		Uri.fromFile(new File(filePath)));
-	shareIntent.setType("image/png");
 
     }
 
@@ -489,13 +465,11 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	// TODO Auto-generated method stub
 	switch (v.getId()) {
 	case R.id.bTopNextPage:
-	    // case R.id.bBottomNextPage:
 	    searchInterface.setIndex(searchInterface.getIndex() + 1);
 	    displayImageUsingIndex();
 	    linkShareIntentWithShareProvider();
 	    break;
 	case R.id.bTopPreviousPage:
-	    // case R.id.bBottomPreviousPage:
 	    if (searchInterface.getIndex() > 1) {
 		searchInterface.setIndex(searchInterface.getIndex() - 1);
 	    }
@@ -511,5 +485,15 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	Bitmap bmp = BitmapFactory.decodeFile(searchInterface
 		.getImagePathForIndex());
 	imdisplayImage.setImageBitmap(bmp);
+	// Scroll to top of page
+	scrollView.fullScroll(ScrollView.FOCUS_UP);
+    }
+
+    private void updateShareIntent() {
+	shareIntent = new Intent();
+	shareIntent.setAction(Intent.ACTION_SEND);
+	shareIntent.setType("image/png");
+	shareIntent.putExtra(Intent.EXTRA_STREAM,
+		Uri.fromFile(new File(searchInterface.getImagePathForIndex())));
     }
 }

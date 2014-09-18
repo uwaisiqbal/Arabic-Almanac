@@ -56,23 +56,15 @@
         android:layout_height="1dip"
         android:layout_below="@+id/llTopButtons"
         android:background="?android:attr/dividerHorizontal" />
-    
-    <ScrollView android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/divisor" 
-        android:layout_marginTop="2dip"
-        android:paddingLeft="7dip"
-        android:paddingRight="7dip"
-        android:paddingBottom="7dip"
-        android:scrollbarStyle="outsideOverlay"
-        android:fadeScrollbars="false"
-        android:id="@+id/svMain">
 
-    <com.etjaal.arabicalmanac.Tools.TouchImageView
+
+    <uk.co.senab.photoview.PhotoView
+        xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/imshow"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    </ScrollView>
-
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/divisor"
+        android:layout_gravity="center"
+        android:adjustViewBounds="true" />
 
 </RelativeLayout>

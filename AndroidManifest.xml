@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.etjaal.arabicalmanac"
-    android:versionCode="14"
+    android:versionCode="15"
     android:versionName="@string/app_version_name" >
 
     <uses-sdk
@@ -33,6 +33,7 @@
             <intent-filter>
                  <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
+            
 
             <meta-data android:name="com.sec.android.support.multiwindow" android:value="true" />
             <meta-data android:name="com.sec.minimode.icon.portrait.normal" android:resource="@drawable/ic_launcher" />

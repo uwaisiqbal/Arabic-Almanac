@@ -2,13 +2,8 @@ package com.etjaal.arabicalmanac.Activities;
 
 import java.io.File;
 
-import com.etjaal.arabicalmanac.R;
-import com.etjaal.arabicalmanac.Objects.Dictionary;
-import com.etjaal.arabicalmanac.Services.DownloadService;
-import com.etjaal.arabicalmanac.Tools.SearchInterface;
-import com.etjaal.arabicalmanac.Tools.TouchImageView;
-import com.samsung.spen.lib.multiwindow.SMultiWindowManager;
-
+import uk.co.senab.photoview.PhotoView;
+import uk.co.senab.photoview.PhotoViewAttacher;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
@@ -22,6 +17,9 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -35,19 +33,25 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.ImageView.ScaleType;
 import android.widget.ScrollView;
 import android.widget.SearchView;
 import android.widget.ShareActionProvider;
 import android.widget.Toast;
+import android.widget.ImageView.ScaleType;
+
+import com.etjaal.arabicalmanac.R;
+import com.etjaal.arabicalmanac.Objects.Dictionary;
+import com.etjaal.arabicalmanac.Services.DownloadService;
+import com.etjaal.arabicalmanac.Tools.SearchInterface;
 
 public class MainActivity extends FragmentActivity implements OnClickListener {
 
     private String TAG = "MainActivity";
-    private TouchImageView imdisplayImage;
+    private PhotoView imdisplayImage;
     private Button topNextPageButton, topLastPageButton;
     private Dictionary dict;
     private SearchInterface searchInterface;
@@ -70,7 +74,6 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     private Intent shareIntent;
     private SearchView searchView;
     private String searchIndex;
-    private ScrollView scrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,13 +88,16 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	prefs = PreferenceManager.getDefaultSharedPreferences(this);
 	editor = prefs.edit();
 
-	mFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
 	// Load views from XML
 	referenceViews();
 
 	dict = new Dictionary("hw4", "Hans Wehr");
-
+	mFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
 	searchInterface = new SearchInterface(getApplicationContext(), dict);
+	// Setup Share Intent
+	shareIntent = new Intent();
+	shareIntent.setAction(Intent.ACTION_SEND);
+	shareIntent.setType("image/png");
 
 	// Force system to reload options menu after a rotation
 	if (savedInstanceState != null) {
@@ -100,7 +106,6 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	    Log.v(TAG, "Loading search index after rotation as: " + searchIndex);
 	    searchInterface.setIndex(Integer.valueOf(searchIndex));
 	    displayImageUsingIndex();
-	    linkShareIntentWithShareProvider();
 	    savedInstanceState = null;
 	} else {
 	    // If download service is not running then run app
@@ -210,6 +215,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	}
 
     };
+   
 
     @Override
     protected void onStart() {
@@ -345,10 +351,12 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 
     /** Load the views from XML */
     private void referenceViews() {
-	scrollView = (ScrollView) findViewById(R.id.svMain);
-	imdisplayImage = (TouchImageView) findViewById(R.id.imshow);
-	imdisplayImage.setMaxZoom(4);
-	imdisplayImage.maintainZoomAfterSetImage(false);
+	// scrollView = (LockableScrollView) findViewById(R.id.svMain);
+	// scrollView.setScrollingEnabled(false);
+	imdisplayImage = (PhotoView) findViewById(R.id.imshow);
+
+	// imdisplayImage.setMaxZoom(4);
+	// imdisplayImage.maintainZoomAfterSetImage(false);
 
 	topNextPageButton = (Button) findViewById(R.id.bTopNextPage);
 	topNextPageButton.setOnClickListener(this);
@@ -394,7 +402,6 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	    String query = intent.getStringExtra(SearchManager.QUERY);
 	    searchInterface.search(query);
 	    displayImageUsingIndex();
-	    linkShareIntentWithShareProvider();
 	}
     }
 
@@ -409,8 +416,9 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 		R.id.action_share).getActionProvider();
 
 	if (mShareActionProvider != null) {
-	    linkShareIntentWithShareProvider();
+	    mShareActionProvider.setShareIntent(shareIntent);
 	}
+
 	// Get the SearchView and set the search-able configuration
 	SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
 	searchView = (SearchView) menu.findItem(R.id.action_search)
@@ -422,16 +430,9 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	if (searchIndex != null) {
 	    searchInterface.setIndex(Integer.valueOf(searchIndex));
 	    displayImageUsingIndex();
-	    linkShareIntentWithShareProvider();
 	}
 
 	return true;
-    }
-
-    private void linkShareIntentWithShareProvider() {
-	// TODO Auto-generated method stub
-	updateShareIntent();
-	mShareActionProvider.setShareIntent(shareIntent);
     }
 
     @Override
@@ -443,17 +444,6 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	    Intent i = new Intent(getBaseContext(), AboutActivity.class);
 	    startActivity(i);
 	    return true;
-	case R.id.action_share:
-	    linkShareIntentWithShareProvider();
-	    startActivity(Intent.createChooser(shareIntent, "Send to"));
-	/*case R.id.action_settings:
-	    // Add in Settings Activity when update for other dictionaries is
-	    // added
-	    /*
-	     * Intent j = new Intent(getApplicationContext(),
-	     * SettingsActivity.class); startActivity(j);
-	     
-	    return true;*/
 	default:
 	    return super.onOptionsItemSelected(item);
 	}
@@ -467,14 +457,12 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	case R.id.bTopNextPage:
 	    searchInterface.setIndex(searchInterface.getIndex() + 1);
 	    displayImageUsingIndex();
-	    linkShareIntentWithShareProvider();
 	    break;
 	case R.id.bTopPreviousPage:
 	    if (searchInterface.getIndex() > 1) {
 		searchInterface.setIndex(searchInterface.getIndex() - 1);
 	    }
 	    displayImageUsingIndex();
-	    linkShareIntentWithShareProvider();
 	    break;
 
 	}
@@ -482,18 +470,23 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 
     /** Display the image in the Image view */
     private void displayImageUsingIndex() {
-	Bitmap bmp = BitmapFactory.decodeFile(searchInterface
-		.getImagePathForIndex());
-	imdisplayImage.setImageBitmap(bmp);
-	// Scroll to top of page
-	scrollView.fullScroll(ScrollView.FOCUS_UP);
+	// scrollView.setEnabled(true);
+	Drawable bmp = new BitmapDrawable(
+		BitmapFactory.decodeFile(searchInterface.getImagePathForIndex()));
+	imdisplayImage.setImageDrawable(bmp);
+	PhotoViewAttacher mAttacher = new PhotoViewAttacher(imdisplayImage);
+	imdisplayImage.setScaleType(PhotoView.ScaleType.CENTER_CROP);
+	mAttacher.setScaleType(PhotoView.ScaleType.CENTER_CROP);
+	//mAttacher.update();
+	updateShareIntent();
     }
 
     private void updateShareIntent() {
-	shareIntent = new Intent();
-	shareIntent.setAction(Intent.ACTION_SEND);
-	shareIntent.setType("image/png");
 	shareIntent.putExtra(Intent.EXTRA_STREAM,
 		Uri.fromFile(new File(searchInterface.getImagePathForIndex())));
+	if (mShareActionProvider != null) {
+	    mShareActionProvider.setShareIntent(shareIntent);
+
+	}
     }
 }

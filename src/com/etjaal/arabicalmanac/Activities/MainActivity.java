@@ -78,6 +78,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	// TODO Auto-generated method stub
+	//Another Comment
 	super.onCreate(savedInstanceState);
 	overridePendingTransition(R.anim.pull_in_from_left, R.anim.hold);
 	setContentView(R.layout.activity_main);

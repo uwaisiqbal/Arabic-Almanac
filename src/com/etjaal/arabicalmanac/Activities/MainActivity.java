@@ -75,6 +75,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     private SearchView searchView;
     private String searchIndex;
 
+    //New Comment
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	// TODO Auto-generated method stub

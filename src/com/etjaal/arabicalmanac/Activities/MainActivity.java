@@ -5,6 +5,7 @@ import java.io.File;
 import uk.co.senab.photoview.PhotoView;
 import uk.co.senab.photoview.PhotoViewAttacher;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
@@ -14,10 +15,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.graphics.Bitmap;
+import android.database.Cursor;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
@@ -27,21 +26,20 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.provider.SyncStateContract.Constants;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.ScrollView;
+import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.ShareActionProvider;
 import android.widget.Toast;
-import android.widget.ImageView.ScaleType;
 
 import com.etjaal.arabicalmanac.R;
 import com.etjaal.arabicalmanac.Objects.Dictionary;
@@ -63,11 +61,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     private static final String IMAGES_IN_GALLERY_FIX_PREFS_KEY = "hideImagesInGallery";
     private static final String DOWNLOAD_SERVICE_RUNNING = "downloadServiceRunning";
     private static final String INDETERMINATE_STAGE = "indeterminateStage";
-    // private String hansWehrLink =
-    // "http://ia600803.us.archive.org/2/items/ArabicAlmanac/hw4.zip";
     private String hansWehrLink = "https://dl.dropboxusercontent.com/u/63542577/hw4.zip";
-    // private String hansWehrLink =
-    // "https://www.dropbox.com/s/cy9qu1pgsa39b2z/hw4.zip?dl=1";
     private IntentFilter mFilter = new IntentFilter("download");
     private ProgressDialog progressDialog;
     private ShareActionProvider mShareActionProvider;
@@ -75,7 +69,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     private SearchView searchView;
     private String searchIndex;
 
-    //New Comment
+    // New Comment
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	// TODO Auto-generated method stub
@@ -126,6 +120,134 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	    handleIntent(getIntent());
 	}
 
+    }
+
+    private String statusMessage(Cursor c) {
+	String msg = "???";
+	switch (c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))) {
+	case DownloadManager.STATUS_FAILED:
+	    msg = "Download failed!";
+	    String failedReason = "";
+	    switch (c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON))) {
+	    case DownloadManager.ERROR_CANNOT_RESUME:
+		failedReason = "ERROR_CANNOT_RESUME";
+		break;
+	    case DownloadManager.ERROR_DEVICE_NOT_FOUND:
+		failedReason = "ERROR_DEVICE_NOT_FOUND";
+		break;
+	    case DownloadManager.ERROR_FILE_ALREADY_EXISTS:
+		failedReason = "ERROR_FILE_ALREADY_EXISTS";
+		break;
+	    case DownloadManager.ERROR_FILE_ERROR:
+		failedReason = "ERROR_FILE_ERROR";
+		break;
+	    case DownloadManager.ERROR_HTTP_DATA_ERROR:
+		failedReason = "ERROR_HTTP_DATA_ERROR";
+		break;
+	    case DownloadManager.ERROR_INSUFFICIENT_SPACE:
+		failedReason = "ERROR_INSUFFICIENT_SPACE";
+		break;
+	    case DownloadManager.ERROR_TOO_MANY_REDIRECTS:
+		failedReason = "ERROR_TOO_MANY_REDIRECTS";
+		break;
+	    case DownloadManager.ERROR_UNHANDLED_HTTP_CODE:
+		failedReason = "ERROR_UNHANDLED_HTTP_CODE";
+		break;
+	    case DownloadManager.ERROR_UNKNOWN:
+		failedReason = "ERROR_UNKNOWN";
+		break;
+	    }
+
+	    Log.v(TAG, failedReason);
+	    break;
+
+	case DownloadManager.STATUS_PAUSED:
+	    msg = "Download paused!";
+	    break;
+
+	case DownloadManager.STATUS_PENDING:
+	    msg = "Download pending!";
+	    break;
+
+	case DownloadManager.STATUS_RUNNING:
+	    msg = "Download in progress!";
+	    break;
+
+	case DownloadManager.STATUS_SUCCESSFUL:
+	    msg = "Download complete!";
+	    break;
+
+	default:
+	    msg = "Download is nowhere in sight";
+	    break;
+	}
+
+	return (msg);
+    }
+
+    private void setupDownloadManager() {
+	DownloadManager.Request request = new DownloadManager.Request(
+		Uri.parse(hansWehrLink));
+
+	request.setDescription("Arabic Almanac");
+	request.setTitle("Download");
+	request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+	request.setDestinationInExternalFilesDir(this,
+		Environment.DIRECTORY_DOWNLOADS, "hw4.zip");
+
+	final DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+
+	final long downloadId = manager.enqueue(request);
+
+	progressDialog = new ProgressDialog(MainActivity.this);
+	progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+	progressDialog.setCancelable(false);
+	progressDialog.setCanceledOnTouchOutside(false);
+	progressDialog.setMax(100);
+	progressDialog.setProgress(0);
+	progressDialog.show();
+
+	new Thread(new Runnable() {
+
+	    @Override
+	    public void run() {
+
+		boolean downloading = true;
+
+		while (downloading) {
+
+		    DownloadManager.Query q = new DownloadManager.Query();
+		    q.setFilterById(downloadId);
+
+		    Cursor cursor = manager.query(q);
+		    cursor.moveToFirst();
+		    int bytes_downloaded = cursor.getInt(cursor
+			    .getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+		    int bytes_total = cursor.getInt(cursor
+			    .getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+
+		    if (cursor.getInt(cursor
+			    .getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
+			downloading = false;
+		    }
+
+		    final int dl_progress = (int) ((bytes_downloaded * 100) / bytes_total);
+
+		    runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+
+			    progressDialog.setProgress((int) dl_progress);
+
+			}
+		    });
+		    Log.d(TAG, statusMessage(cursor));
+		    cursor.close();
+		}
+
+	    }
+	}).start();
     }
 
     @Override
@@ -216,7 +338,6 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	}
 
     };
-   
 
     @Override
     protected void onStart() {
@@ -294,14 +415,18 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 			    public void onClick(DialogInterface dialog,
 				    int which) {
 				// Start download
-				Intent i = new Intent(getApplicationContext(),
-					DownloadService.class);
-				i.putExtra("url", hansWehrLink);
-				i.putExtra("path", path);
-				i.putExtra("fileName", dict.getReference());
-				startService(i);
-				setupProgressDialog(prefs.getBoolean(
-					INDETERMINATE_STAGE, false));
+				// Intent i = new
+				// Intent(getApplicationContext(),
+				// DownloadService.class);
+				/*
+				 * i.putExtra("url", hansWehrLink);
+				 * i.putExtra("path", path);
+				 * i.putExtra("fileName", dict.getReference());
+				 * startService(i);
+				 * setupProgressDialog(prefs.getBoolean(
+				 * INDETERMINATE_STAGE, false));
+				 */
+				setupDownloadManager();
 			    }
 			}).create();
 	alertDialog.show();
@@ -352,13 +477,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 
     /** Load the views from XML */
     private void referenceViews() {
-	// scrollView = (LockableScrollView) findViewById(R.id.svMain);
-	// scrollView.setScrollingEnabled(false);
 	imdisplayImage = (PhotoView) findViewById(R.id.imshow);
-
-	// imdisplayImage.setMaxZoom(4);
-	// imdisplayImage.maintainZoomAfterSetImage(false);
-
 	topNextPageButton = (Button) findViewById(R.id.bTopNextPage);
 	topNextPageButton.setOnClickListener(this);
 	topLastPageButton = (Button) findViewById(R.id.bTopPreviousPage);
@@ -471,14 +590,12 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 
     /** Display the image in the Image view */
     private void displayImageUsingIndex() {
-	// scrollView.setEnabled(true);
 	Drawable bmp = new BitmapDrawable(
 		BitmapFactory.decodeFile(searchInterface.getImagePathForIndex()));
 	imdisplayImage.setImageDrawable(bmp);
 	PhotoViewAttacher mAttacher = new PhotoViewAttacher(imdisplayImage);
 	imdisplayImage.setScaleType(PhotoView.ScaleType.CENTER_CROP);
 	mAttacher.setScaleType(PhotoView.ScaleType.CENTER_CROP);
-	//mAttacher.update();
 	updateShareIntent();
     }
 
@@ -487,7 +604,6 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 		Uri.fromFile(new File(searchInterface.getImagePathForIndex())));
 	if (mShareActionProvider != null) {
 	    mShareActionProvider.setShareIntent(shareIntent);
-
 	}
     }
 }

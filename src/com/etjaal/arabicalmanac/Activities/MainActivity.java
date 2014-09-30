@@ -27,6 +27,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.sec.multiwindow.MultiWindowManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -74,6 +75,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
     private Intent shareIntent;
     private SearchView searchView;
     private String searchIndex;
+    private MultiWindowManager sMWM;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +84,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	super.onCreate(savedInstanceState);
 	overridePendingTransition(R.anim.pull_in_from_left, R.anim.hold);
 	setContentView(R.layout.activity_main);
+	//sMWM = new MultiWindowManager(this);
 
 	path = Environment.getExternalStorageDirectory().toString() + "/"
 		+ getResources().getString(R.string.app_name) + "/";

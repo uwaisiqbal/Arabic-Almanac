@@ -6,12 +6,31 @@ public class Dictionary {
     private String reference;
     private String name;
     private String language;
-    private int size;
+    private String downloadLink;
     private boolean installed;
+    private int size;
+
+    public Dictionary() {
+
+    }
 
     public Dictionary(String reference, String name) {
 	this.reference = reference;
 	this.name = name;
+	downloadLink = "https://dl.dropboxusercontent.com/u/63542577/"
+		+ reference + ".zip";
+
+    }
+
+    public Dictionary(String ref, String name, String lang, boolean installed,
+	    int size) {
+	this.reference = ref;
+	this.name = name;
+	this.language = lang;
+	downloadLink = "https://dl.dropboxusercontent.com/u/63542577/" + ref
+		+ ".zip";
+	this.installed = installed;
+	this.size = size;
     }
 
     public int getId() {
@@ -38,6 +57,10 @@ public class Dictionary {
 	return installed;
     }
 
+    public String getDownloadLink() {
+	return downloadLink;
+    }
+
     public void setId(int id) {
 	this.id = id;
     }
@@ -62,4 +85,11 @@ public class Dictionary {
 	this.installed = installed;
     }
 
+    public void setDownloadLink(String downloadLink) {
+	this.downloadLink = downloadLink;
+    }
+
+    public String toString() {
+	return name + " (" + language + ")";
+    }
 }

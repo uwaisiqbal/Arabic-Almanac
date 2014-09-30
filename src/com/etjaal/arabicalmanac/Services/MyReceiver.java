@@ -72,7 +72,6 @@ public class MyReceiver extends BroadcastReceiver {
 	    Toast.makeText(context,
 		    "All files have been successfully downloaded",
 		    Toast.LENGTH_SHORT).show();
-
 	}
 
     }

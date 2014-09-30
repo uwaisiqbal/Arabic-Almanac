@@ -8,15 +8,16 @@
     <string name="action_share">Share</string>
     <string name="action_search">Search</string>
     <string name="search_hint">Search Arabic root letters</string>
-    <string name="dialog_title">Warning</string>
-    <string name="dialog_message">The Arabic Almanac app needs to download some necessay files, which can be large (~ 60 MB).
+    <string name="dialog_warning_title">Warning</string>
+    <string name="dialog_choose_title">Choose which dictionaries to download</string>
+    <string name="dialog_message">The Arabic Almanac app needs to download some necessay files.
     							To avoid extra data usage charges, please use Wi-Fi. </string>
     <string name="dialog_cancel_button">Cancel</string>
     <string name="dialog_download_button">Download</string>
     <string name="progress_bar_download_title">Downloading</string>
     <string name="progress_bar_download_message">Download in Progress&#8230;</string>
-    <string name="progress_bar_unzip_title">Unzipping</string>
-    <string name="progress_bar_unzip_message">Unzip in Progress&#8230;</string>
+    <string name="progress_bar_unzip_message">Unzipping</string>
+    <string name="progress_bar_unzip_title">Unzip in Progress&#8230;</string>
     <string name="previous_page_button">Previous Page</string>
     <string name="next_page_button">Next Page</string>
     <string name="faq_activity_text">

@@ -88,8 +88,7 @@ public class SearchInterface {
     private String loadJSONFromAsset() {
 	String json = null;
 	try {
-	    InputStream is = context.getAssets().open(
-		    dict.getReference() + "_indexes.json");
+	    InputStream is = context.getAssets().open("indexes.json");
 	    int size = is.available();
 	    byte[] buffer = new byte[size];
 	    is.read(buffer);

@@ -137,7 +137,7 @@ public class DownloadService extends Service {
 
     }
 
-    public void Unzip(String zipFile, String location) {
+    public static void Unzip(String zipFile, String location) {
 	int BUFFER_SIZE = 1024;
 	int count = 0;
 	byte[] buffer = new byte[BUFFER_SIZE];

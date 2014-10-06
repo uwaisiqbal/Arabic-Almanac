@@ -70,7 +70,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	    Dictionary hans = new Dictionary(Constants.HANS_WEHR_REF,
 		    "Hans Wehr", Constants.LANG_ENG, false, 60);
 	    Dictionary lisan = new Dictionary(Constants.LISAN_REF, "Lisan al-Arab", 
-		    Constants.LANG_ENG, false, 671);
+		    Constants.LANG_ARABIC, false, 671);
 	    Dictionary mukhtaar = new Dictionary("ums", "Mukhtaar as-Sahih", Constants.LANG_URDU, false, 50);
 	    Dictionary mufradaat = new Dictionary("umr", "Mufradaat Alfaaz al-Quran", Constants.LANG_URDU, false, 47);
 	    dbHelp.addDictionary(mufradaat);

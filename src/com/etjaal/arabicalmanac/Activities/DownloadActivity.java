@@ -26,6 +26,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -35,13 +36,15 @@ import com.etjaal.arabicalmanac.R;
 import com.etjaal.arabicalmanac.Objects.Dictionary;
 import com.etjaal.arabicalmanac.Services.UnzipService;
 import com.etjaal.arabicalmanac.Tools.DatabaseHelper;
-import com.etjaal.arabicalmanac.Tools.ProgressDialogManager;
+import com.etjaal.arabicalmanac.Tools.DownloadProgressDialogManager;
+import com.etjaal.arabicalmanac.Tools.UnzipProgressDialogManager;
 
 public class DownloadActivity extends Activity {
 
     private SharedPreferences.Editor editor;
     private SharedPreferences prefs;
-    private ProgressDialogManager progressDialogManager;
+    private DownloadProgressDialogManager downloadProgressDialogManager;
+    private UnzipProgressDialogManager unzipProgressDialogManager;
     private Context context;
     private static final String FIRST_TIME_PREFS_KEY = "firstTime";
     private static final String IMAGES_IN_GALLERY_FIX_PREFS_KEY = "hideImagesInGallery";
@@ -53,51 +56,80 @@ public class DownloadActivity extends Activity {
     private ArrayList<Integer> mSelectedItems;
     private DatabaseHelper dbHelp;
     private ArrayList<Dictionary> listOfDicts;
+    private ArrayList<Long> downloadIds;
+    // private boolean[] unzippingArray;
+    private int noOfDownloadsComplete;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	// TODO Auto-generated method stub
 	super.onCreate(savedInstanceState);
+	// Remove title bar from activity in dialog theme
+	requestWindowFeature(Window.FEATURE_NO_TITLE);
+	noOfDownloadsComplete = 0;
 	context = this;
 
 	dbHelp = new DatabaseHelper(this);
-	listOfDicts = (ArrayList<Dictionary>) dbHelp.getListOfDictionariesBasedOnInstallStatus(false);
+	listOfDicts = (ArrayList<Dictionary>) dbHelp
+		.getListOfDictionariesBasedOnInstallStatus(false);
 
 	// Initialise Prefs
 	prefs = PreferenceManager.getDefaultSharedPreferences(this);
 	editor = prefs.edit();
 	path = Environment.getExternalStorageDirectory().toString() + "/"
 		+ getResources().getString(R.string.app_name) + "/";
-	progressDialogManager = new ProgressDialogManager(this,listOfDicts);
-	//Need to save mSelectedItems in prefs so I can pass it to the progressDialog manager
+	downloadProgressDialogManager = new DownloadProgressDialogManager(this,
+		listOfDicts);
+	unzipProgressDialogManager = new UnzipProgressDialogManager(this);
+	// Need to save mSelectedItems in prefs so I can pass it to the
+	// progressDialog manager
 	downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
 
-	
-	if (!prefs.getBoolean(DOWNLOAD_RUNNING, false)) {
-	    
-	    if (!prefs.getBoolean(UnzipService.UNZIP_RUNNING, false)) {
-		//If neither download nor unzip service is running then run the app
-		run();
-	    } else {
-		//If download is complete and unzip is still running
-		
-		//Need two arrays of boolean variables
-		//One to tell which of the downloads is still running
-		//Another to tell which of the downloads is unzipping
-		//Then cycle through each element of the two arrays and setup the dialog accordingly
-		progressDialogManager.setupIndeterminateProgressDialog();
-		progressDialogManager.showProgressDialog();
-	    }
-	} else {
-	    //If download is still runnning
-	    onDownloadCompleteReceiver.onReceive(context, null);
+	boolean[] downloadingArray = UnzipService.loadBooleanArray(
+		DOWNLOAD_RUNNING, context);
+	// unzippingArray = UnzipService.loadBooleanArray(
+	// UnzipService.UNZIP_RUNNING, context);
+	boolean runApp = true;
+
+	/*
+	 * for (int i = 0; i < downloadingArray.length; i++) { if
+	 * (downloadingArray[i]) { // If download is still runnning
+	 * onDownloadReceiver.onReceive(context, null); runApp = false; } else
+	 * if (unzippingArray[i]) { // If download is complete and unzip is
+	 * still running
+	 * downloadProgressDialogManager.setupIndeterminateProgressDialog(i);
+	 * downloadProgressDialogManager.showProgressDialog(); runApp = false; }
+	 * }
+	 */
+
+	// If neither download nor unzip service is running then run the app
+	if (runApp) {
+	    run();
 	}
+
+	/*
+	 * if (!prefs.getBoolean(DOWNLOAD_RUNNING, false)) {
+	 * 
+	 * if (!prefs.getBoolean(UnzipService.UNZIP_RUNNING, false)) {
+	 * 
+	 * run(); } else {
+	 * 
+	 * // Need two arrays of boolean variables // One to tell which of the
+	 * downloads is still running // Another to tell which of the downloads
+	 * is unzipping // Then cycle through each element of the two arrays and
+	 * setup // the dialog accordingly
+	 * downloadProgressDialogManager.setupIndeterminateProgressDialog();
+	 * downloadProgressDialogManager.showProgressDialog(); } } else { // If
+	 * download is still runnning onDownloadReceiver.onReceive(context,
+	 * null); }
+	 */
 
     }
 
     private void setupDownloadManager() {
-	ArrayList<Long> downloadIds = new ArrayList<Long>();
-	//Register selected dictionaries with the download manager
+	downloadIds = new ArrayList<Long>();
+	// Register selected dictionaries with the download manager
+	// Queue them for download
 	for (Integer item : mSelectedItems) {
 	    String link = listOfDicts.get(item).getDownloadLink();
 	    DownloadManager.Request request = new DownloadManager.Request(
@@ -112,14 +144,16 @@ public class DownloadActivity extends Activity {
 			    .getReference() + ".zip");
 	    request.setVisibleInDownloadsUi(false);
 	    downloadIds.add(downloadManager.enqueue(request));
-	    //Save array to prefs so If user leaves app the data can be retreived
-	    saveArrayList(downloadIds);
+	    // Save array to prefs so If user leaves app the data can be
+	    // retreived
+	   // saveLongArrayList(downloadIds);
 	}
-	updateProgressDialog();
+	// unzippingArray = new boolean[downloadIds.size()];
+	onDownloadReceiver.onReceive(context, null);
 
     }
 
-    public void saveArrayList(ArrayList<Long> list) {
+    public void saveLongArrayList(ArrayList<Long> list) {
 
 	editor.putInt("Status_size", list.size());
 
@@ -131,7 +165,7 @@ public class DownloadActivity extends Activity {
 	editor.commit();
     }
 
-    public ArrayList<Long> loadArrayList() {
+    public ArrayList<Long> loadLongArrayList() {
 	ArrayList<Long> list = new ArrayList<Long>();
 	int size = prefs.getInt("Status_size", 0);
 	for (int i = 0; i < size; i++) {
@@ -150,59 +184,49 @@ public class DownloadActivity extends Activity {
 	return array;
     }
 
-
     private void updateProgressDialog() {
-	progressDialogManager.showProgressDialog();
-
+	if (!downloadProgressDialogManager.isShowing()) {
+	    downloadProgressDialogManager.showProgressDialog();
+	}
 	new Thread(new Runnable() {
 
 	    @Override
 	    public void run() {
-
-		boolean downloading = true;
-
-		while (downloading) {
-		    final ArrayList<Long> downloadIds = loadArrayList();
-		    long[] array = getArrayFromArrayList(downloadIds);
-		    DownloadManager.Query q = new DownloadManager.Query();
-		    q.setFilterById(array);
-
+		//final ArrayList<Long> downloadIds = loadLongArrayList();
+		long[] array = getArrayFromArrayList(downloadIds);
+		DownloadManager.Query q = new DownloadManager.Query();
+		q.setFilterById(array);
+		while (!downloadIds.isEmpty()) {
 		    Cursor cursor = downloadManager.query(q);
 		    if (cursor.moveToFirst()) {
-
 			do {
 			    int bytes_downloaded = cursor.getInt(cursor
 				    .getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
 			    int bytes_total = cursor.getInt(cursor
 				    .getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+			    final int dl_progress = (int) ((bytes_downloaded * 100l) / bytes_total);
 			    long downloadId = cursor.getLong(cursor
 				    .getColumnIndex(DownloadManager.COLUMN_ID));
 			    final int pos = downloadIds.indexOf(downloadId);
-			    if (cursor.getInt(cursor
-				    .getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
-				// If download complete remove from arraylist
-	
-				
-				downloadIds.remove(downloadId);
-				saveArrayList(downloadIds);
-				
-				// If list is empty ie all downloads complete,
-				// set
-				// downloading false
-				if (downloadIds.size() == 0) {
-				    downloading = false;
-				}
-
-			    }
-
-			    final int dl_progress = (int) ((bytes_downloaded * 100l) / bytes_total);
-
+			    int columnIndex = cursor
+				    .getColumnIndex(DownloadManager.COLUMN_STATUS);
+			    final int status = cursor.getInt(columnIndex);
 			    runOnUiThread(new Runnable() {
 
 				@Override
 				public void run() {
 				    // Update during download
-				    progressDialogManager.setProgress(pos, dl_progress);
+				    // If pos has not been removed from
+				    // downloadIds
+
+				    if (status == DownloadManager.STATUS_SUCCESSFUL) {
+					//downloadIds.remove(pos);
+					//saveLongArrayList(downloadIds);
+					//onDownloadComplete(pos);
+				    } else if (status == DownloadManager.STATUS_RUNNING) {
+					downloadProgressDialogManager
+						.setProgress(pos, dl_progress);
+				    }
 
 				}
 			    });
@@ -217,10 +241,35 @@ public class DownloadActivity extends Activity {
 	}).start();
     }
 
-    BroadcastReceiver onDownloadCompleteReceiver = new BroadcastReceiver() {
+    public void onDownloadComplete(int pos) {
+	// Post Download
+
+	downloadProgressDialogManager.setProgressBarComplete(pos);
+	noOfDownloadsComplete++;
+	// If all files downloaded then start Unzip Service
+	if (noOfDownloadsComplete == mSelectedItems.size()) {
+	    ArrayList<String> zipFiles = new ArrayList<String>();
+	    for (Integer item : mSelectedItems) {
+		String zipFile = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+			+ "/" + listOfDicts.get(item).getReference() + ".zip";
+		zipFiles.add(zipFile);
+	    }
+	    downloadProgressDialogManager.dismissProgressDialog();
+	    unzipProgressDialogManager.showUnzipProgressDialog();
+	    Intent i = new Intent(getBaseContext(), UnzipService.class);
+	    i.putStringArrayListExtra(UnzipService.ZIP_FILE, zipFiles);
+	    i.putExtra(UnzipService.UNZIP_PATH, path);
+	    // unzippingArray[pos] = true;
+	    // UnzipService.saveBooleanArray(UnzipService.UNZIP_RUNNING,
+	    // unzippingArray, context);
+	    startService(i);
+	}
+    }
+
+    BroadcastReceiver onDownloadReceiver = new BroadcastReceiver() {
 	public void onReceive(Context ctxt, Intent intent) {
 	    DownloadManager.Query query = new DownloadManager.Query();
-	    ArrayList<Long> downloadIds = loadArrayList();
+	    //ArrayList<Long> downloadIds = loadLongArrayList();
 	    query.setFilterById(getArrayFromArrayList(downloadIds));
 	    Cursor cursor = downloadManager.query(query);
 
@@ -238,24 +287,10 @@ public class DownloadActivity extends Activity {
 		    int reason = cursor.getInt(columnReason);
 
 		    if (status == DownloadManager.STATUS_SUCCESSFUL) {
-
-			// Post Download
-			String zipFile = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-				+ "/"
-				+ listOfDicts.get(mSelectedItems.get(pos))
-					.getReference() + ".zip";
-			// Change progressDialog to Indeterminate State
-			progressDialogManager.setupIndeterminateProgressDialog(pos);
 			downloadManager.remove(downloadId);
 			downloadIds.remove(downloadId);
-			saveArrayList(downloadIds);
-
-			Intent i = new Intent(getBaseContext(),
-				UnzipService.class);
-			i.putExtra(UnzipService.ZIP_FILE, zipFile);
-			i.putExtra(UnzipService.UNZIP_PATH, path);
-			startService(i);
-
+			//saveLongArrayList(downloadIds);
+			onDownloadComplete(pos);
 		    } else if (status == DownloadManager.STATUS_FAILED) {
 			// Download Failed
 			editor.putBoolean(FIRST_TIME_PREFS_KEY, false);
@@ -285,26 +320,21 @@ public class DownloadActivity extends Activity {
 
 	@Override
 	public void onReceive(Context arg0, Intent intent) {
-	    Bundle bundle = intent.getExtras();
-	    if (bundle != null) {
-		int resultCode = bundle.getInt(UnzipService.RESULT);
-		if (resultCode == RESULT_OK) {
-		    // If Unzipped Correctly
-		    // progressDialogManager.dismissProgressDialog();
-		    //progressDialog.dismiss();
-		    Toast.makeText(context,
-			    "All files have been successfully downloaded",
-			    Toast.LENGTH_SHORT).show();
-		    for (Integer item : mSelectedItems) {
-			dbHelp.setDictionaryAsInstalled(listOfDicts.get(item),
-				true);
-			Log.v("Set Dict as Installed", listOfDicts.get(item)
-				.getName());
-		    }
-		    // editor.putBoolean(FIRST_TIME_PREFS_KEY, true);
-		    // editor.commit();
-		    run();
+	    int resultCode = intent.getIntExtra(UnzipService.RESULT, 0);
+	    if (resultCode == RESULT_OK) {
+		// If all files Unzipped Correctly
+		Toast.makeText(context,
+			"All files have been successfully downloaded",
+			Toast.LENGTH_SHORT).show();
+		for (Integer item : mSelectedItems) {
+		    dbHelp.setDictionaryAsInstalled(listOfDicts.get(item), true);
+		    Log.v("Set Dict as Installed", listOfDicts.get(item)
+			    .getName());
 		}
+		unzipProgressDialogManager.dismissUnzipProgressDialog();
+		// editor.putBoolean(FIRST_TIME_PREFS_KEY, true);
+		// editor.commit();
+		run();
 	    }
 	}
     };
@@ -436,8 +466,10 @@ public class DownloadActivity extends Activity {
 			    @Override
 			    public void onClick(DialogInterface dialog,
 				    int which) {
-				progressDialogManager.setSelectedItems(mSelectedItems);
+				downloadProgressDialogManager
+					.setSelectedItems(mSelectedItems);
 				setupDownloadManager();
+				updateProgressDialog();
 			    }
 			}).create();
 	alertDialog.show();
@@ -480,7 +512,7 @@ public class DownloadActivity extends Activity {
     protected void onResume() {
 	// TODO Auto-generated method stub
 	super.onResume();
-	registerReceiver(onDownloadCompleteReceiver, new IntentFilter(
+	registerReceiver(onDownloadReceiver, new IntentFilter(
 		DownloadManager.ACTION_DOWNLOAD_COMPLETE));
 	registerReceiver(UnzipServiceReceiver, new IntentFilter(
 		UnzipService.NOTIFICATION));
@@ -491,6 +523,6 @@ public class DownloadActivity extends Activity {
 	super.onPause();
 	overridePendingTransition(R.anim.hold, R.anim.push_out_to_left);
 	unregisterReceiver(UnzipServiceReceiver);
-	unregisterReceiver(onDownloadCompleteReceiver);
+	unregisterReceiver(onDownloadReceiver);
     }
 }

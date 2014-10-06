@@ -16,7 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-public class ProgressDialogManager {
+public class DownloadProgressDialogManager {
 
     private Context context;
     private Dialog progressDialog;
@@ -26,16 +26,16 @@ public class ProgressDialogManager {
     private ArrayList<TextView> tvProgressList;
     private ArrayList<TextView> tvTitleList;
 
-    public ProgressDialogManager(Context context,
+    public DownloadProgressDialogManager(Context context,
 	    ArrayList<Dictionary> listOfDicts) {
 	this.context = context;
 	this.listOfDicts = listOfDicts;
 	progressDialog = new Dialog(context);
-	setupProgressDialog();
     }
     
     public void setSelectedItems(ArrayList<Integer> mSelectedItems){
 	this.mSelectedItems = mSelectedItems;
+	setupProgressDialog();
 	
     }
 
@@ -50,6 +50,10 @@ public class ProgressDialogManager {
 
     public void showProgressDialog() {
 	progressDialog.show();
+    }
+    
+    public boolean isShowing(){
+	return progressDialog.isShowing();
     }
 
     public void dismissProgressDialog() {
@@ -89,6 +93,12 @@ public class ProgressDialogManager {
     public void setProgress(int pos, int progress) {
 	pbList.get(pos).setProgress(progress);
 	tvProgressList.get(pos).setText(String.valueOf(progress) + "%");
+    }
+    
+    public void setProgressBarComplete(int pos){
+	//pbList.get(pos).setIndeterminate(false);
+	setProgress(pos, 100);
+	tvTitleList.get(pos).setText(listOfDicts.get(mSelectedItems.get(pos)).getName() + " Downloaded");
     }
 
     public void setMessage(int pos, String message) {

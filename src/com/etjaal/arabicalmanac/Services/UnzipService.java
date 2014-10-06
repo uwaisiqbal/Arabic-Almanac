@@ -5,24 +5,23 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.etjaal.arabicalmanac.R;
-import com.etjaal.arabicalmanac.Activities.MainActivity;
-
 import android.app.Activity;
 import android.app.IntentService;
-import android.app.Notification;
-import android.app.PendingIntent;
-import android.app.Notification.Builder;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+
+import com.etjaal.arabicalmanac.R;
+import com.etjaal.arabicalmanac.Activities.MainActivity;
 
 public class UnzipService extends IntentService {
 
@@ -53,10 +52,13 @@ public class UnzipService extends IntentService {
 
 	setupNotification();
 
-	String zipFile = intent.getStringExtra(ZIP_FILE);
+	ArrayList<String> zipFiles = intent.getStringArrayListExtra(ZIP_FILE);
 	String path = intent.getStringExtra(UNZIP_PATH);
-	Unzip(zipFile, path);
-	DeleteRecursive(new File(zipFile));
+	// Unzip the files
+	for (String zipFile : zipFiles) {
+	    Unzip(zipFile, path);
+	    DeleteRecursive(new File(zipFile));
+	}
 	result = Activity.RESULT_OK;
 	publishResults(result);
     }
@@ -79,15 +81,15 @@ public class UnzipService extends IntentService {
 
     private void publishResults(int result) {
 	// TODO Auto-generated method stub
-	editor.putBoolean(UNZIP_RUNNING, false);
 	editor.putBoolean(FIRST_TIME_PREFS_KEY, true);
+	editor.putBoolean(UNZIP_RUNNING, false);
 	editor.commit();
 
 	PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
 		new Intent(getBaseContext(), MainActivity.class),
 		PendingIntent.FLAG_ONE_SHOT);
 	mBuilder.setContentTitle(getResources().getString(R.string.app_name))
-		.setContentText("All files have been downloaded successfully")
+		.setContentText("All files have been successfully installed")
 		.setProgress(0, 0, false)
 		.setSmallIcon(android.R.drawable.stat_sys_download_done)
 		.setContentIntent(pendingIntent);
@@ -96,6 +98,30 @@ public class UnzipService extends IntentService {
 	Intent intent = new Intent(NOTIFICATION);
 	intent.putExtra(RESULT, result);
 	sendBroadcast(intent);
+    }
+
+    public static boolean[] loadBooleanArray(String prefsKey, Context context) {
+	SharedPreferences prefs = PreferenceManager
+		.getDefaultSharedPreferences(context);
+	int size = prefs.getInt(prefsKey + "_size", 0);
+	boolean[] array = new boolean[size];
+	for (int i = 0; i < size; i++) {
+	    array[i] = prefs.getBoolean(prefsKey + i, false);
+	}
+	return array;
+    }
+
+    public static void saveBooleanArray(String prefsKey, boolean[] array,
+	    Context context) {
+	SharedPreferences prefs = PreferenceManager
+		.getDefaultSharedPreferences(context);
+	SharedPreferences.Editor editor = prefs.edit();
+	editor.putInt(prefsKey + "_size", array.length);
+	for (int i = 0; i < array.length; i++) {
+	    editor.remove(prefsKey + i);
+	    editor.putBoolean(prefsKey + i, array[i]);
+	}
+	editor.commit();
     }
 
     private void DeleteRecursive(File fileOrDirectory) {

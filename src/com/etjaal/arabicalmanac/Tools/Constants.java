@@ -7,6 +7,7 @@ public class Constants {
     public static final String LANG_URDU = "Urdu";
     public static final String LANG_FR = "French";
     public static final String LANG_MALAY = "Malay";
+    public static final String LANG_ARABIC = "Arabic";
 
     public static final String HANS_WEHR_REF = "hw4";   
     public static final String LISAN_REF = "la";

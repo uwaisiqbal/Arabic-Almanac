@@ -67,6 +67,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 
 	if (prefs.getBoolean(ADD_DICTS_TO_DB, true)) {
 	    // Add dictionaries to db on first run of app
+		//TODO: Create a pre-built db of all dicts and load into app from assets
 	    Dictionary hans = new Dictionary(Constants.HANS_WEHR_REF,
 		    "Hans Wehr", Constants.LANG_ENG, false, 60);
 	    Dictionary lisan = new Dictionary(Constants.LISAN_REF, "Lisan al-Arab", 
@@ -94,6 +95,7 @@ public class MainActivity extends FragmentActivity implements OnClickListener {
 	shareIntent.setType("image/png");
 
 	// Force system to reload options menu after a rotation
+	//TODO: Do we need this????
 	if (savedInstanceState != null) {
 	    searchIndex = savedInstanceState.getString("search_index");
 	    searchInterface.setIndex(Integer.valueOf(searchIndex));
